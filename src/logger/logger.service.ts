@@ -7,7 +7,7 @@ export class LoggerService implements LoggerService {
         @Inject('winston') private readonly logger: winston.Logger,
     ) {}
 
-    info(message: string, context?: any): void {
+    info(message: any, context?: any): void {
         this.logger.info(message, { context });
     }
 
