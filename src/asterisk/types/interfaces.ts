@@ -149,3 +149,8 @@ export enum AsteriskCause {
     INTERWORKING = "127",
     NOT_DEFINED = "0",
 }
+
+export enum CallType {
+    Incoming = "incoming",
+    Outgoing = "outgoing",
+}

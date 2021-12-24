@@ -4,7 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AsteriskCause, AsteriskExtensionStatusEvent, AsteriskHungupEvent, statusDND, statusHint } from './types/interfaces';
+import { AsteriskCause, AsteriskExtensionStatusEvent, AsteriskHungupEvent, CallType, statusDND, statusHint } from './types/interfaces';
+import { DatabaseService } from '@app/database/database.service';
+import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
+
 export interface PlainObject { [key: string]: any }
 let checkCDR = true;
 
@@ -18,7 +21,8 @@ export class AmiService implements OnApplicationBootstrap {
         @Inject('AMI') private readonly ami: any,
         private readonly configService: ConfigService,
         private readonly log: LoggerService,
-        private eventEmitter: EventEmitter2,
+        private mysql: DatabaseService,
+        private callQueue: CallInfoService
         
     ) {
     }
@@ -40,16 +44,17 @@ export class AmiService implements OnApplicationBootstrap {
 
     };
 
-    private parseAmiEvent(event: AsteriskHungupEvent): void{
-
+    private async parseAmiEvent(event: AsteriskHungupEvent): Promise<void>{
         if(checkCDR && event.calleridnum.toString().length < 4 &&
         event.uniqueid == event.linkedid &&
         event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING,AsteriskCause.USER_BUSY].includes(event?.cause))
+        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY].includes(event?.cause))
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
             this.log.info(`Исходящий ${event.uniqueid}`);
+            await this.callQueue.runCallQueueJob('Outgoing',{ uniqueid: event.uniqueid, type: CallType.Outgoing});
+
         } 
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
         event.uniqueid == event.linkedid &&
@@ -59,6 +64,7 @@ export class AmiService implements OnApplicationBootstrap {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
             this.log.info(`Входящий ${event.uniqueid}`);
+            await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.uniqueid, type: CallType.Incoming});
         }
     }
 

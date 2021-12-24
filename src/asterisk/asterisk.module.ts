@@ -6,25 +6,29 @@ import { AmiService } from './asterisk-ami.service';
 import { AmiEventsHandlers } from './asterisk-ami-events-handlers';
 import * as ARI from 'ari-client';
 import * as namiLib from 'nami';
+import { DatabaseModule } from '@app/database/database.module';
+import { CallInfoQueueModule } from '../callInfoQueue/callInfo.module';
 
 @Module({
     imports: [
         ConfigModule,
         LoggerModule,
+        DatabaseModule,
+        CallInfoQueueModule
     ],
     providers: [
-        {
-            provide: 'ARI',
-            useFactory: async (configService: ConfigService) => {
-                return {
-                    ariClient: await ARI.connect(
-                        configService.get('asterisk.ari.url'), 
-                        configService.get('asterisk.ari.user'), 
-                        configService.get('asterisk.ari.password')),
-                };
-            },
-            inject: [ConfigService]
-        },
+        // {
+        //     provide: 'ARI',
+        //     useFactory: async (configService: ConfigService) => {
+        //         return {
+        //             ariClient: await ARI.connect(
+        //                 configService.get('asterisk.ari.url'), 
+        //                 configService.get('asterisk.ari.user'), 
+        //                 configService.get('asterisk.ari.password')),
+        //         };
+        //     },
+        //     inject: [ConfigService]
+        // },
         {
             provide: 'AMI',
             useFactory: async (configService: ConfigService) => {
@@ -38,11 +42,11 @@ import * as namiLib from 'nami';
             },
             inject: [ConfigService]
         },
-        AriService,
+        //AriService,
         AmiService,
         AmiEventsHandlers
     ],
-    exports: ['ARI', AriService, 'AMI', AmiService]
+    exports: [/*'ARI', AriService,*/ 'AMI', AmiService]
 })
 
 export class AsteriskModule {}
