@@ -7,9 +7,21 @@ import { LoggerModule } from './logger/logger.module';
 import { AsteriskModule } from './asterisk/asterisk.module';
 import configuration from './config/config.provider';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { DatabaseModule } from './database/database.module';
+import { UtilsModule } from './utils/utils.module';
+import { AxiosModule } from './axios/axios.module';
+import { CallInfoQueueModule } from './callInfoQueue/callInfo.module';
+
 
 @Module({
-  imports: [ConfigModule.forRoot({ load: [configuration] }), EventEmitterModule.forRoot(),AmocrmModule, LoggerModule, AsteriskModule],
+  imports: [
+  ConfigModule.forRoot({ load: [configuration] }),
+  AmocrmModule, 
+  LoggerModule, 
+  AsteriskModule, 
+  DatabaseModule, 
+  UtilsModule, 
+  AxiosModule, CallInfoQueueModule],
   controllers: [AppController],
   providers: [AppService],
   exports: [ConfigModule]
