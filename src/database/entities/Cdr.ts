@@ -1,6 +1,8 @@
 import { Table, Column, Model } from 'sequelize-typescript';
 
-@Table
+@Table({
+  tableName: 'cdr'
+})
 export class Cdr extends Model {
   @Column
   calldate: Date;
