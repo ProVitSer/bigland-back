@@ -5,7 +5,6 @@ import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AsteriskCause, AsteriskExtensionStatusEvent, AsteriskHungupEvent, CallType, statusDND, statusHint } from './types/interfaces';
-import { DatabaseService } from '@app/database/database.service';
 import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
 
 export interface PlainObject { [key: string]: any }
@@ -21,7 +20,6 @@ export class AmiService implements OnApplicationBootstrap {
         @Inject('AMI') private readonly ami: any,
         private readonly configService: ConfigService,
         private readonly log: LoggerService,
-        private mysql: DatabaseService,
         private callQueue: CallInfoService
         
     ) {
