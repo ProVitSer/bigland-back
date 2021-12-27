@@ -2,27 +2,26 @@ import { LoggerService } from "../logger/logger.service";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Cdr } from "./entities/Cdr";
-import { Op as $ } from 'sequelize'
+import { Op } from 'sequelize'
 
 
 @Injectable()
 export class DatabaseService {
     constructor(
       @InjectModel(Cdr)
-      private cdr: typeof Cdr,
+      private getCallInfo: typeof Cdr,
       private readonly logger : LoggerService, 
     ) {}
 
     public async searchIncomingCallInfoInCdr(uniqueid: string): Promise<Cdr[]> {
       try{
         this.logger.info(`Входящий вызов ${uniqueid}`)
-
-        const result  = await this.cdr.findAll({
+        const result  = await this.getCallInfo.findAll({
           raw: true,
           attributes: ["calldate", "src", "dcontext", "dstchannel", "billsec", "disposition", "uniqueid", "recordingfile"],
           where: {
               uniqueid: {
-                  [$.like]: uniqueid
+                  [Op.like]: uniqueid
               }
           },
           order: [
@@ -31,7 +30,8 @@ export class DatabaseService {
           limit: 1
       });
 
-      this.logger.info(`Результат выгрузки по входящему вызову ${result}`)
+      this.logger.info(result);
+
       if(result.length !== 0){
         return null;
       } else {
@@ -43,24 +43,24 @@ export class DatabaseService {
 
     }
 
-    async searchOutgoingCallInfoInCdr(uniqueid: string): Promise<Cdr> {
+    public async searchOutgoingCallInfoInCdr(uniqueid: string): Promise<Cdr> {
       try{
         this.logger.info(`Исходящий вызов ${uniqueid}`)
 
-        const result  = await this.cdr.findAll({
+        const result  = await this.getCallInfo.findAll({
           raw: true,
           attributes: ["calldate", "dst", "channel", "dcontext", "billsec", "disposition", "uniqueid", "recordingfile"],
           where: {
               uniqueid: {
-                  [$.like]: uniqueid
+                  [Op.like]: uniqueid
               },
               dcontext: {
-                  [$.like]: 'from-internal'
+                  [Op.like]: 'from-internal'
               }
           }
         });
 
-        this.logger.info(`Результат выгрузки по исходящему вызову ${result}`)
+        this.logger.info(result);
 
         if(result[0]){
             return result[0];
