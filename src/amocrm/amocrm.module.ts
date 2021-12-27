@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigService, ConfigModule } from '@nestjs/config';
-import { AmocrmService } from './amocrm.service';
+import { AmocrmConnector } from './amocrm.connect';
 import * as AmoCRM from 'amocrm-js';
 import { LoggerModule } from '@app/logger/logger.module';
+import { AmocrmService } from './amocrm.service';
 
 @Module({
   imports: [
@@ -28,7 +29,9 @@ import { LoggerModule } from '@app/logger/logger.module';
       },
       inject: [ConfigService]
   },
+  AmocrmConnector,
   AmocrmService],
-  exports: ["Amocrm", AmocrmService],
+  exports: [AmocrmService],
+
 })
 export class AmocrmModule {}
