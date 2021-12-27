@@ -14,7 +14,6 @@ export class CallInfoService {
     public async runCallQueueJob( type: string ,event: PlainObject): Promise<Bull.JobId> {
         try{
             const result = await this.addToCallQueue(type, event);
-            console.log(`Добавили в очередь на обработку ${result}`);
             return result;
         }catch(e){
             console.log(`Проблемы с добавлением события в очередь ${e}`);
@@ -24,7 +23,6 @@ export class CallInfoService {
     private async addToCallQueue(type: string , event: PlainObject): Promise<Bull.JobId> {
         try{
             const result =  await this.callQueue.add(type, event, { removeOnComplete: true, delay: 30000 });
-            console.log(result)
             return result.id
         }catch(e){
             console.log(`Проблемы с добавлением события в очередь ${e}`);
