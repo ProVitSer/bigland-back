@@ -12,13 +12,13 @@ import { Cdr } from './entities/Cdr';
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        dialect: 'mysql',
-        host: configService.get('mysql.host'),
-        port: configService.get('mysql.port'),
-        username: configService.get('mysql.username'),
-        password: configService.get('mysql.password'),
-        database: configService.get('mysql.databases'),
-        autoLoadModels: false,
+        dialect: 'mariadb',
+        host: configService.get('mariadb.host'),
+        port: configService.get('mariadb.port'),
+        username: configService.get('mariadb.username'),
+        password: configService.get('mariadb.password'),
+        database: configService.get('mariadb.databases'),
+        autoLoadModels: true,
         synchronize: false
       }),
       inject: [ConfigService],
