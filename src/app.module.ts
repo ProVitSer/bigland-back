@@ -11,6 +11,7 @@ import { DatabaseModule } from './database/database.module';
 import { UtilsModule } from './utils/utils.module';
 import { AxiosModule } from './axios/axios.module';
 import { CallInfoQueueModule } from './callInfoQueue/callInfo.module';
+import { MongoModule } from './mongo/mongo.module';
 
 
 @Module({
@@ -21,7 +22,7 @@ import { CallInfoQueueModule } from './callInfoQueue/callInfo.module';
   AsteriskModule, 
   DatabaseModule, 
   UtilsModule, 
-  AxiosModule, CallInfoQueueModule],
+  AxiosModule, CallInfoQueueModule, MongoModule],
   controllers: [AppController],
   providers: [AppService],
   exports: [ConfigModule]
