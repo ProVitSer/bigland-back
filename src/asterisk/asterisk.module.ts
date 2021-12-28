@@ -8,13 +8,15 @@ import * as ARI from 'ari-client';
 import * as namiLib from 'nami';
 import { DatabaseModule } from '@app/database/database.module';
 import { CallInfoQueueModule } from '../callInfoQueue/callInfo.module';
+import { AmocrmModule } from '@app/amocrm/amocrm.module';
 
 @Module({
     imports: [
         ConfigModule,
         LoggerModule,
         DatabaseModule,
-        CallInfoQueueModule
+        CallInfoQueueModule,
+        AmocrmModule
     ],
     providers: [
         // {

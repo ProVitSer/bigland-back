@@ -19,10 +19,23 @@ export class AmocrmService implements OnApplicationBootstrap {
     }
 
     public async onApplicationBootstrap() {
-        this.amocrm = await this.connect()
+        this.amocrm = await this.connect();
     }
 
-    public async searchContact(incomingNumber: string){
+
+    public async actionsInAmocrm(incomingNumber: string , incomingTrunk: operatorCIDNumber): Promise<void>{
+        try {
+            const resultSearchContact = await this.searchContact(incomingNumber);
+            if (resultSearchContact == false) {
+                const idCreateContact = await this.createContact(incomingNumber, incomingTrunk);
+                await this.createLeads(incomingNumber, incomingTrunk, idCreateContact);
+            }
+        } catch(e){
+            this.logger.error(`Ошибка взаимодействия с Amocrm по Лидам,Контактам ${e}`);
+        }
+    }
+
+    public async searchContact(incomingNumber: string): Promise<boolean>{
         try {
             const info: AmocrmGetContactsRequest = {
                 query: incomingNumber
@@ -37,7 +50,7 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     }
 
-    async createContact(incomingNumber: string, incomingTrunk: operatorCIDNumber) {
+    private async createContact(incomingNumber: string, incomingTrunk: operatorCIDNumber): Promise<number> {
         try {
             const responsibleUserId = this.getResponsibleUserId();
             const contact: AmocrmCreateContact = {
@@ -73,7 +86,7 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     }
 
-    async createLeads(incomingNumber: string, incomingTrunk: operatorCIDNumber, contactsId: number) {
+    private async createLeads(incomingNumber: string, incomingTrunk: operatorCIDNumber, contactsId: number): Promise<boolean> {
         try {
             const responsibleUserId = this.getResponsibleUserId();
             const lead: AmocrmCreateLead = {

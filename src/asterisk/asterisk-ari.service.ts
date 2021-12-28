@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import * as Ari from 'ari-client';
 import * as moment from 'moment';
 import { AsteriskARIStasisStartEvent } from './types/interfaces';
+import { AmocrmService } from '@app/amocrm/amocrm.service';
+import { operatorCIDNumber } from '@app/config/config';
 
 export interface PlainObject { [key: string]: any }
 
@@ -17,6 +19,7 @@ export class AriService implements OnApplicationBootstrap {
         @Inject('ARI') private readonly ari: any, 
         private readonly configService: ConfigService,
         private readonly log: LoggerService,
+        private readonly amocrm: AmocrmService
     ) {
     }
 
@@ -32,8 +35,8 @@ export class AriService implements OnApplicationBootstrap {
 
     private routingCall(event: AsteriskARIStasisStartEvent){
         const incomingNumber = (event.channel.caller.number.length == 10) ? `+7${event.channel.caller.number}`: event.channel.caller.number;
-        const incomingTrunk = event.channel.dialplan.exten;
-        //Создание лида в амо
+        const incomingTrunk = event.channel.dialplan.exten as operatorCIDNumber;
+        this.amocrm.actionsInAmocrm(incomingNumber,incomingTrunk)
         this.continueDialplan(event.channel.id)
     }
 
