@@ -79,23 +79,23 @@ export interface Leads {
 
 export interface Contacts {
     id: number,
-    is_main: string,
+    is_main?: string,
 }
 
 export interface AmocrmCreateContact {
     name: string,
-    first_name: string,
-    last_name: string,
+    first_name?: string,
+    last_name?: string,
     responsible_user_id: number,
     created_by: number,
-    updated_by: number,
-    created_at: number,
-    updated_at: number,
+    updated_by?: number,
+    created_at?: number,
+    updated_at?: number,
     custom_fields_values: Array<any>,
-    _embedded: {
+    _embedded?: {
         tags: Tags[]
     },
-    request_id: string,
+    request_id?: string,
 }
 
 export interface CatalogElements {
@@ -117,13 +117,57 @@ export interface AmocrmCreateLead {
     created_at?: number,
     updated_at?: number,
     loss_reason_id?: number,
+    responsible_user_id: number,
     custom_fields_values: Array<any>,
-    _embedded: {
-        tags: Tags[],
-        contacts: Contacts[],
-        companies: Companies[]
+    _embedded?: {
+        tags?: Tags[],
+        contacts?: Contacts[],
+        companies?: Companies[]
     },
 }
+
+
+export interface AmocrmCreateContactResponse {
+    _links: {
+      self: {
+        href: string;
+      };
+    };
+    _embedded: {
+      contacts: [
+        {
+          id: number;
+          request_id: string;
+          _links: {
+            self: {
+              href: string;
+            };
+          };
+        }
+      ];
+    };
+  }
+  export interface AmocrmCreateLeadResponse {
+    _links: {
+      self: {
+        href: string;
+      };
+    };
+    _embedded: {
+      leads: [
+        {
+          id: number;
+          request_id: string;
+          _links: {
+            self: {
+              href: string;
+            };
+          };
+        }
+      ];
+    };
+  }
+
 
 export enum ContactsOrder {
     update = "updated_at",
@@ -139,4 +183,9 @@ export enum amocrmAPI {
 export enum httpMethod {
     get = "GET",
     port = "POST"
+}
+
+export enum pbxCallStatus {
+    ANSWERED = "ANSWERED",
+    NOANSWER = "NO ANSWER"
 }
