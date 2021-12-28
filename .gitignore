@@ -42,3 +42,4 @@ token.json
 api-log
 ormconfig.json
 *.old
+src/config/config.ts
