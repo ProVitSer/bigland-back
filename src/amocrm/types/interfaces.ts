@@ -12,7 +12,7 @@ export interface AmocrmGetContactsRequest {
     page?: number,
     limit?: number,
     query: string,
-    order?: ContactsOrder
+    order?: contactsOrder
 }
 
 export interface BasicResponse {
@@ -126,6 +126,49 @@ export interface AmocrmCreateLead {
     },
 }
 
+export interface AmocrmAddCallInfo {
+  direction: directionType,
+  uniq?: string,
+  duration: number,
+  source: string,
+  link?: string,
+  phone: string,
+  call_result?: string,
+  call_status?: amocrmCallStatus,
+  responsible_user_id: number,
+  created_by?: number,
+  updated_by?: number,
+  created_at?: number,
+  updated_at?: number,
+  request_id?: string,
+}
+
+export interface AmocrmAddCallInfoResponse {
+    _total_items: number,
+    errors: Array<any>,
+    _embedded: {
+        calls: [
+            {
+                id: number,
+                entity_id: number,
+                entity_type: string,
+                account_id: number,
+                request_id: string,
+                _embedded: {
+                    entity: {
+                        id: number,
+                        _links: {
+                            self: {
+                                href?: string,
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}
+
 
 export interface AmocrmCreateContactResponse {
     _links: {
@@ -147,7 +190,8 @@ export interface AmocrmCreateContactResponse {
       ];
     };
   }
-  export interface AmocrmCreateLeadResponse {
+
+export interface AmocrmCreateLeadResponse {
     _links: {
       self: {
         href: string;
@@ -169,7 +213,7 @@ export interface AmocrmCreateContactResponse {
   }
 
 
-export enum ContactsOrder {
+export enum contactsOrder {
     update = "updated_at",
     id = "id"
 }
@@ -177,7 +221,8 @@ export enum ContactsOrder {
 export enum amocrmAPI {
     contacts = "/api/v4/contacts",
     leads = "/api/v4/leads",
-    account = "/api/v4/account"
+    account = "/api/v4/account",
+    call = "/api/v4/calls"
 }
 
 export enum httpMethod {
@@ -187,5 +232,21 @@ export enum httpMethod {
 
 export enum pbxCallStatus {
     ANSWERED = "ANSWERED",
-    NOANSWER = "NO ANSWER"
+    NOANSWER = "NO ANSWER",
+    BUSY = "BUSY"
+}
+
+export enum directionType {
+  inbound = "inbound",
+  outbound = "outbound"
+}
+
+export enum amocrmCallStatus {
+  Message = 1,
+  CallBackLater = 2,
+  Absent = 3,
+  Answer = 4,
+  WrongNumber = 5,
+  NoAnswer = 6,
+  Busy = 7  
 }
