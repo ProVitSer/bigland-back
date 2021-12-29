@@ -33,9 +33,9 @@ export class DatabaseService {
       this.logger.info(result);
 
       if(result.length !== 0){
-        return null;
-      } else {
         return result;
+      } else {
+        throw Error('Не найдены данные по входящему вызову вызову')
       }
       }catch(e){
         this.logger.error(`searchIncomingCallInfoInCdr ${e}`)
@@ -62,10 +62,10 @@ export class DatabaseService {
 
         this.logger.info(result);
 
-        if(result[0]){
-            return result[0];
+        if(result.length !== 0){
+          return result[0];
         } else {
-            return null;
+          throw Error('Не найдены данные по исходящему вызову')
         }
       }catch(e){
         this.logger.error(`searchOutgoingCallInfoInCdr ${e}`)
