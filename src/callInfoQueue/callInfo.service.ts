@@ -16,16 +16,16 @@ export class CallInfoService {
             const result = await this.addToCallQueue(type, event);
             return result;
         }catch(e){
-            console.log(`Проблемы с добавлением события в очередь ${e}`);
+            this.log.error(`Проблемы с добавлением события в очередь ${e}`);
         }
     }
 
     private async addToCallQueue(type: string , event: PlainObject): Promise<Bull.JobId> {
         try{
-            const result =  await this.callQueue.add(type, event, { removeOnComplete: true, delay: 30000 });
+            const result =  await this.callQueue.add(type, event, { attempts: 5,removeOnComplete: true, delay: 30000, backoff: 10000 });
             return result.id
         }catch(e){
-            console.log(`Проблемы с добавлением события в очередь ${e}`);
+            this.log.error(`Проблемы с добавлением события в очередь ${e}`);
 
         }
     }
