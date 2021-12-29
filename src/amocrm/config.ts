@@ -1,4 +1,7 @@
 import { operatorCIDNumber, OriginalCIDNumber } from '../config/config';
+import { amocrmCallStatus, pbxCallStatus } from './types/interfaces';
+
+export const RecordPathFormat = "YYYY/MM/DD"
 
 export const sipTrunkMap: { [code in operatorCIDNumber]: OriginalCIDNumber } = {
     [operatorCIDNumber.MOBILE1]: OriginalCIDNumber.MOBILE1,
@@ -33,3 +36,8 @@ export const numberDescriptionkMap: { [code in operatorCIDNumber]: string } = {
     [operatorCIDNumber.GOROD6]: "SYN_34 Усадьба в Подмосковье",
 };
 
+export const callStatuskMap: { [code in pbxCallStatus]?: amocrmCallStatus } = {
+    [pbxCallStatus.ANSWERED]: amocrmCallStatus.Answer,
+    [pbxCallStatus.NOANSWER]: amocrmCallStatus.NoAnswer,
+    [pbxCallStatus.BUSY]: amocrmCallStatus.Busy,
+}
