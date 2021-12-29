@@ -1,10 +1,13 @@
 import { LoggerService } from '@app/logger/logger.service';
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AmocrmConnector } from './amocrm.connect';
-import { amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
-    AmocrmGetContactsResponse, httpMethod } from './types/interfaces';
-import { numberDescriptionkMap, sipTrunkMap } from './config';
+import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
+    AmocrmGetContactsResponse, directionType, httpMethod } from './types/interfaces';
+import { callStatuskMap, numberDescriptionkMap, RecordPathFormat, sipTrunkMap } from './config';
 import { operatorCIDNumber, responsibleUserId } from '../config/config'; 
+import * as moment from 'moment';
+import { Cdr } from '@app/database/entities/Cdr';
+import { PlainObject } from '@app/mongo/types/interfaces';
 
 @Injectable()
 export class AmocrmService implements OnApplicationBootstrap {
@@ -34,6 +37,46 @@ export class AmocrmService implements OnApplicationBootstrap {
             this.logger.error(`Ошибка взаимодействия с Amocrm по Лидам,Контактам ${e}`);
         }
     }
+
+    public async sendCallInfoToCRM(result: Cdr, amocrmId : string,  direction : directionType) {
+        try {
+            const { uniqueid, src, dst, calldate, billsec, disposition, recordingfile } = result;
+
+            const callInfo : AmocrmAddCallInfo = {
+                "direction": direction,
+                "uniq": uniqueid,
+                "duration": billsec,
+                "source": "amo_custom_widget",
+                "link": `https://ats-bigland.ru/rec/monitor/${moment().format(RecordPathFormat)}/${recordingfile}`,
+                "phone": (src !== undefined)? src : dst,
+                "call_result": "",
+                "call_status": callStatuskMap[disposition],
+                "responsible_user_id": Number(amocrmId),
+                "created_by": Number(amocrmId),
+                "updated_by": Number(amocrmId),
+                "created_at": moment(calldate).unix(),
+                "updated_at": moment(calldate).unix(),
+            }
+
+            this.logger.info(callInfo);
+            const resultSendCallIfo = (await this.amocrm.request.post(amocrmAPI.call, [callInfo]));
+            if([400,401].includes(resultSendCallIfo.statusCode)){
+                this.logger.error(resultSendCallIfo.data['validation-errors'][0].errors);
+                throw Error(resultSendCallIfo.data['validation-errors'][0].errors)
+            } else {
+                this.logger.error(resultSendCallIfo.data);
+                return this.validationErrors(resultSendCallIfo.data);
+            }
+        } catch(e){
+            throw e;
+        }
+    }
+
+    private validationErrors(response: PlainObject): boolean| Error {
+       return (response._total_items === 1)? true : Error();
+    }
+
+    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
 
     public async searchContact(incomingNumber: string): Promise<boolean>{
         try {
