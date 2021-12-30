@@ -66,28 +66,20 @@ import { directionType } from '@app/amocrm/types/interfaces';
       return await this.mongo.mongoRequest(params);
     }
 
-    @OnQueueActive()
-    onActive(job: Job): void {
-        console.log(`onActive job ${job}`);
-    }
-
-    @OnQueueWaiting()
-    onWaiting(job: Job): void {
-        console.log(`onWaiting job ${job}`);
-    }
-
     @OnQueueError()
     onError(job: Job): void {
-        console.log(`onError job ${job}`);
+      this.logger.error(`OnQueueError ${JSON.stringify(job)}`);
     }
 
     @OnQueueFailed()
     onFailed(job: Job): void {
-        console.log(`onFailed job ${job}`);
+      if(job.attemptsMade === 5){
+        this.logger.error(`Job data ${JSON.stringify(job.data)} error ${JSON.stringify(job.stacktrace)}`);
+      }
     }
   
     @OnQueueCompleted()	
     onCompleted(job: Job): void {
-      console.log(`onCompleted job ${job}`);
-  }
+      this.logger.info(`onCompleted ${JSON.stringify(job)}`);
+    }
   }
