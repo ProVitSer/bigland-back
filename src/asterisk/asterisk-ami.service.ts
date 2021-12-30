@@ -4,8 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AsteriskCause, AsteriskExtensionStatusEvent, AsteriskHungupEvent, CallType, statusDND, statusHint } from './types/interfaces';
+import { AsteriskCause, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, EventsStatus, statusDND, statusHint } from './types/interfaces';
 import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
+import * as namiLib from 'nami';
+import * as util from 'util';
+
 
 export interface PlainObject { [key: string]: any }
 let checkCDR = true;
@@ -100,7 +103,7 @@ export class AmiService implements OnApplicationBootstrap {
             this.setDNDStatus(extension, statusDND.off,statusHint.off)
     }
 
-    private async setDNDStatus(extension: string, dnd : statusDND, hint: statusHint) {
+    public async setDNDStatus(extension: string, dnd : statusDND, hint: statusHint) {
         const action = new this.ami.Actions.DbPut();
         action.Family = 'DND';
         action.Key = extension;
@@ -109,10 +112,32 @@ export class AmiService implements OnApplicationBootstrap {
         (resultSend.response == 'Success')? this.setHintStatus(extension, hint) : null
     }
 
-    private async setHintStatus(extension: string, hint: statusHint) {
+    public async setHintStatus(extension: string, hint: statusHint) {
         const action = new this.ami.Actions.Command();
         action.Command = `devstate change Custom:DND${extension} ${hint}`;
         const resultSend = await this.client.send(action);
+    }
+
+    public async getExtensionStatus() {
+        const action = new namiLib.Actions.Status();
+        const resultExtensionStatus: AsteriskStatusResponse = await new Promise((resolve, reject) => {
+            this.client.send(action, (event:any)=>{
+                resolve(event)
+            })
+        });
+        return this.formatExtenStatus(resultExtensionStatus)
+    }
+
+    private formatExtenStatus(status: AsteriskStatusResponse){
+        return status.events.map( (event: EventsStatus) => {
+            if (event.hasOwnProperty(`lines`) && event.hasOwnProperty(`EOL`) && event.hasOwnProperty(`variables`)) {
+                delete event.lines;
+                delete event.EOL;
+                delete event.variables;
+                return event;
+            }
+        })
+
     }
 
     private changeValueCDR(){
