@@ -7,9 +7,11 @@ import * as Transport from 'winston-transport';
 import 'winston-daily-rotate-file';
 const { combine, timestamp, label, printf, splat } = winston.format;
 import * as moment from 'moment';
+import { TGModule } from '@app/telegram/telegram.module';
 
 @Module({
     imports: [
+        TGModule,
         WinstonModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => {

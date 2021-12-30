@@ -1,3 +1,4 @@
+import { TGService } from '@app/telegram/telegram.service';
 import {Inject, Injectable} from '@nestjs/common';
 import * as winston from 'winston';
 
@@ -5,6 +6,7 @@ import * as winston from 'winston';
 export class LoggerService implements LoggerService {
     constructor(
         @Inject('winston') private readonly logger: winston.Logger,
+        private readonly tg: TGService,
     ) {}
 
     info(message: any, context?: any): void {
@@ -17,5 +19,6 @@ export class LoggerService implements LoggerService {
 
     error(message: string, context?: any): void {
         this.logger.error(message, { context });
+        //this.tg.tgAlert(message);
     }
 }
