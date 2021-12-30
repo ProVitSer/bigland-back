@@ -69,7 +69,7 @@ export class MongoService {
             throw e
         }
     }
-    
+      
     private async insertMany({ model, data }): Promise<any | undefined> {
         try{
             return await model.insertMany(data);

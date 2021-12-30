@@ -1,8 +1,10 @@
 import { Document, Schema } from 'mongoose';
-import { AmocrmUsers } from '../schemas';
+import { AmocrmUsers, LdsUsersStatus } from '../schemas';
 
 export enum CollectionType {
   amocrmUsers = 'amocrmUsers',
+  ldsUserStatus = 'ldsUserStatus',
+
 }
 
 export enum DbRequestType {
@@ -23,4 +25,4 @@ export type SchemaType = {
   };
 };
 
-type SchemaClassType = typeof AmocrmUsers;
+type SchemaClassType = typeof AmocrmUsers | typeof LdsUsersStatus ;

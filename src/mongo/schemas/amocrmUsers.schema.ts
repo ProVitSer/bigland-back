@@ -5,14 +5,11 @@ import * as mongoose from 'mongoose';
 
 @Schema({ collection: CollectionType.amocrmUsers, versionKey: false })
 export class AmocrmUsers {
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'any' })
-    objectID: any;
+    @Prop()
+    amocrmId: number;
 
-    @Prop({ type: String, required: true })
-    amocrmId: string;
-
-    @Prop({ type: String, required: true })
-    localExtension: string;
+    @Prop()
+    localExtension: number;
 }
 
 export const AmocrmUsersSchema = SchemaFactory.createForClass(AmocrmUsers);
