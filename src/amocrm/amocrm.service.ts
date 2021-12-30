@@ -8,15 +8,18 @@ import { operatorCIDNumber, responsibleUserId } from '../config/config';
 import * as moment from 'moment';
 import { Cdr } from '@app/database/entities/Cdr';
 import { PlainObject } from '@app/mongo/types/interfaces';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AmocrmService implements OnApplicationBootstrap {
 
-    public amocrm: any
+    public amocrm: any;
+    private readonly recordDomain = this.configService.get('customConf.recordDomain')
 
     constructor(
         private readonly amocrmConnect: AmocrmConnector,
-        private readonly logger: LoggerService
+        private readonly logger: LoggerService,
+        private readonly configService: ConfigService,
 
     ) {
     }
@@ -38,7 +41,7 @@ export class AmocrmService implements OnApplicationBootstrap {
         }
     }
 
-    public async sendCallInfoToCRM(result: Cdr, amocrmId : string,  direction : directionType) {
+    public async sendCallInfoToCRM(result: Cdr, amocrmId : number,  direction : directionType) {
         try {
             const { uniqueid, src, dst, calldate, billsec, disposition, recordingfile } = result;
 
@@ -47,13 +50,13 @@ export class AmocrmService implements OnApplicationBootstrap {
                 "uniq": uniqueid,
                 "duration": billsec,
                 "source": "amo_custom_widget",
-                "link": `https://ats-bigland.ru/rec/monitor/${moment().format(RecordPathFormat)}/${recordingfile}`,
+                "link": `${this.recordDomain}/rec/monitor/${moment().format(RecordPathFormat)}/${recordingfile}`,
                 "phone": (src !== undefined)? src : dst,
                 "call_result": "",
                 "call_status": callStatuskMap[disposition],
-                "responsible_user_id": Number(amocrmId),
-                "created_by": Number(amocrmId),
-                "updated_by": Number(amocrmId),
+                "responsible_user_id": amocrmId,
+                "created_by": amocrmId,
+                "updated_by": amocrmId,
                 "created_at": moment(calldate).unix(),
                 "updated_at": moment(calldate).unix(),
             }

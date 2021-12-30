@@ -9,7 +9,6 @@ import { AmocrmService } from './amocrm.service';
   imports: [
     ConfigModule,
     LoggerModule,
-    
   ],
   providers: [
     {
