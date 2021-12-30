@@ -12,6 +12,8 @@ import { UtilsModule } from './utils/utils.module';
 import { AxiosModule } from './axios/axios.module';
 import { CallInfoQueueModule } from './callInfoQueue/callInfo.module';
 import { MongoModule } from './mongo/mongo.module';
+import { ScheduleDataModule } from './schedule/schedule.module';
+import { TGModule } from './telegram/telegram.module';
 
 
 @Module({
@@ -22,7 +24,7 @@ import { MongoModule } from './mongo/mongo.module';
   AsteriskModule, 
   DatabaseModule, 
   UtilsModule, 
-  AxiosModule, CallInfoQueueModule, MongoModule],
+  AxiosModule, CallInfoQueueModule, MongoModule, ScheduleDataModule, TGModule],
   controllers: [AppController],
   providers: [AppService],
   exports: [ConfigModule]
