@@ -68,6 +68,58 @@ export interface AsteriskARIStasisStartEvent {
     application: string;
 }
 
+export interface AsteriskStatusResponse {
+    lines: Array<string>,
+    EOL: string,
+    variables: object,
+    response: string,
+    actionid: string,
+    eventlist: string,
+    message: string,
+    events: EventsStatus[],
+}
+
+export interface EventsStatus {
+    lines: Array<string>,
+    EOL: string,
+    variables: object,
+    event: string,
+    privilege?: string,
+    channel?: string,
+    channelstate?: string,
+    channelstatedesc?: string,
+    calleridnum?: string,
+    calleridname?: string,
+    connectedlinenum?: string,
+    connectedlinename?: string,
+    language?: string,
+    accountcode?: string,
+    context?: string,
+    exten?: string,
+    priority?: string,
+    uniqueid?: string,
+    linkedid?: string,
+    type?: string,
+    dnid?: string,
+    effectiveconnectedlinenum?: string,
+    effectiveconnectedlinename?: string,
+    timetohangup?: string,
+    bridgeid?: string,
+    application?: string,
+    data?: string,
+    nativeformats?: string,
+    readformat?: string,
+    readtrans?: string,
+    writeformat?: string,
+    writetrans?: string,
+    callgroup?: string,
+    pickupgroup?: string,
+    seconds?: string,
+    actionid?: string,
+    eventlist?: string,
+    listitems?: string,
+    items?: string,
+}
 
 
 export enum AsteriskEvent {
