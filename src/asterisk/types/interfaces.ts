@@ -121,6 +121,29 @@ export interface EventsStatus {
     items?: string,
 }
 
+export interface AsteriskDNDStatusResponse {
+    lines: Array<string>,
+    EOL: string,
+    variables: object,
+    response: string,
+    actionid: string,
+    eventlist: string,
+    message: string,
+    events: DNDStatus,
+}
+
+
+export interface DNDStatus {
+    lines: Array<string>,
+    EOL: string,
+    variables: object,
+    event: string,
+    family: string,
+    key: string,
+    val: string,
+    actionid: string
+}
+
 
 export enum AsteriskEvent {
     Hangup = "Hangup",

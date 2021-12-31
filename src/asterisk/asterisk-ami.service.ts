@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AsteriskCause, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, EventsStatus, statusDND, statusHint } from './types/interfaces';
+import { AsteriskCause, AsteriskDNDStatusResponse, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, EventsStatus, statusDND, statusHint } from './types/interfaces';
 import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
 import * as namiLib from 'nami';
 import * as util from 'util';
@@ -105,13 +105,14 @@ export class AmiService implements OnApplicationBootstrap {
         const action = new namiLib.Actions.DbGet();
         action.Family = 'DND';
         action.Key = extension;
-        const resultSend : any = await new Promise((resolve) =>{
+        const resultSend : AsteriskDNDStatusResponse = await new Promise((resolve) =>{
             this.client.send(action, (event: any) => {
                 resolve(event);
             });
         });
+        this.log.info(resultSend);
 
-        (resultSend.events[0].val == '')? 
+        return (resultSend.events[0].val == '')? 
             this.setDNDStatus(extension, statusDND.on,statusHint.on) : 
             this.setDNDStatus(extension, statusDND.off,statusHint.off)
     }
@@ -121,21 +122,21 @@ export class AmiService implements OnApplicationBootstrap {
         action.Family = 'DND';
         action.Key = extension;
         action.Val = dnd;
-        const resultSend: any = await new Promise((resolve) =>{
+        const resultSend: AsteriskStatusResponse = await new Promise((resolve) => {
             this.client.send(action, (event: any) => {
                 resolve(event)
             });
         });
-        (resultSend.response == 'Success')? this.setHintStatus(extension, hint) : null
+        this.log.info(resultSend);
+        return (resultSend.response == 'Success')? this.setHintStatus(extension, hint) : null
     }
 
     private async setHintStatus(extension: string, hint: statusHint): Promise<void>  {
         const action = new namiLib.Actions.Command();
         action.Command = `devstate change Custom:DND${extension} ${hint}`;
-        await new Promise((resolve) => {
-            this.client.send(action, (event:any) => {
-                this.log.info(event)
-            })
+        return await new Promise((resolve) => {
+            this.client.send(action)
+            resolve();
         });
     }
 
@@ -157,7 +158,7 @@ export class AmiService implements OnApplicationBootstrap {
                 delete event.variables;
                 return event;
             }
-        })
+        });
 
     }
 
