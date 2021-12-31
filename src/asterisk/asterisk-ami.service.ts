@@ -71,7 +71,7 @@ export class AmiService implements OnApplicationBootstrap {
 
     public async sendAmiCall(localExtension: string, outgoingNumber: string): Promise<void> {
         this.log.info(`Исходящий вызов из webhook CRM: внутренний номер ${localExtension} внешний номер ${outgoingNumber}`);
-        const action = new this.ami.Actions.Originate();
+        const action = new namiLib.Actions.Originate();
         action.channel = `SIP/${localExtension}`; 
         action.callerid = localExtension;
         action.priority = '1';
@@ -84,36 +84,48 @@ export class AmiService implements OnApplicationBootstrap {
 
     }
 
-    public trasferCall(channelId: string, extension: string): void{
+    public async trasferCall(channelId: string, extension: string): Promise<void> {
         this.log.info(`Перевод вызов через панель канала ${channelId} на добавочный ${extension}`);
-        const action = new this.ami.Actions.BlindTransfer();
+        const action = new namiLib.Actions.BlindTransfer();
         action.Channel = channelId;
         action.Context = 'from-internal-xfer';
         action.Exten = extension;
-        this.client.send(action);
+        await new Promise((resolve, reject) => {
+            this.client.send(action, (event:any)=>{
+                this.log.info(`trasferCall ${event}`)
+            })
+        });
     }
 
     public async getDNDStatus(extension: string): Promise<void> {
-        const action = new this.ami.Actions.DbGet();
+        const action = new namiLib.Actions.DbGet();
         action.Family = 'DND';
         action.Key = extension;
-        const resultSend = await this.client.send(action);
-        (resultSend.events[0].val == '')? 
-            this.setDNDStatus(extension, statusDND.on,statusHint.on) : 
-            this.setDNDStatus(extension, statusDND.off,statusHint.off)
+
+        const resultSend = await new Promise((resolve, reject) => {
+            this.client.send(action, (event:any)=>{
+                resolve(event)
+            })
+        });
+        console.log(resultSend)
+        // (resultSend.events[0].val == '')? 
+        //     this.setDNDStatus(extension, statusDND.on,statusHint.on) : 
+        //     this.setDNDStatus(extension, statusDND.off,statusHint.off)
     }
 
     public async setDNDStatus(extension: string, dnd : statusDND, hint: statusHint) {
-        const action = new this.ami.Actions.DbPut();
+        const action = new namiLib.Actions.DbPut();
         action.Family = 'DND';
         action.Key = extension;
         action.Val = dnd;
         const resultSend = await this.client.send(action);
+
+
         (resultSend.response == 'Success')? this.setHintStatus(extension, hint) : null
     }
 
     public async setHintStatus(extension: string, hint: statusHint) {
-        const action = new this.ami.Actions.Command();
+        const action = new namiLib.Actions.Command();
         action.Command = `devstate change Custom:DND${extension} ${hint}`;
         const resultSend = await this.client.send(action);
     }
