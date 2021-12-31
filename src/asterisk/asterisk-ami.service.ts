@@ -9,7 +9,6 @@ import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
 import * as namiLib from 'nami';
 import * as util from 'util';
 
-
 export interface PlainObject { [key: string]: any }
 let checkCDR = true;
 
@@ -79,7 +78,11 @@ export class AmiService implements OnApplicationBootstrap {
         action.context = 'from-internal';
         action.exten = outgoingNumber;
         action.async = 'yes';
-        const resultInitCall = await this.client.send(action);
+        const resultInitCall : any = await new Promise((resolve) =>{
+            this.client.send(action, (event: any) => {
+                resolve(event);
+            });
+        });
         this.log.info(`Результат инициации вызова ${resultInitCall}`);
 
     }
@@ -90,44 +93,50 @@ export class AmiService implements OnApplicationBootstrap {
         action.Channel = channelId;
         action.Context = 'from-internal-xfer';
         action.Exten = extension;
-        await new Promise((resolve, reject) => {
-            this.client.send(action, (event:any)=>{
-                this.log.info(`trasferCall ${event}`)
-            })
+        const resultSend : any = await new Promise((resolve) =>{
+            this.client.send(action, (event: any) => {
+                resolve(event);
+            });
         });
+        this.log.info(resultSend)
     }
 
     public async getDNDStatus(extension: string): Promise<void> {
         const action = new namiLib.Actions.DbGet();
         action.Family = 'DND';
         action.Key = extension;
-
-        const resultSend = await new Promise((resolve, reject) => {
-            this.client.send(action, (event:any)=>{
-                resolve(event)
-            })
+        const resultSend : any = await new Promise((resolve) =>{
+            this.client.send(action, (event: any) => {
+                resolve(event);
+            });
         });
-        console.log(resultSend)
-        // (resultSend.events[0].val == '')? 
-        //     this.setDNDStatus(extension, statusDND.on,statusHint.on) : 
-        //     this.setDNDStatus(extension, statusDND.off,statusHint.off)
+
+        (resultSend.events[0].val == '')? 
+            this.setDNDStatus(extension, statusDND.on,statusHint.on) : 
+            this.setDNDStatus(extension, statusDND.off,statusHint.off)
     }
 
-    public async setDNDStatus(extension: string, dnd : statusDND, hint: statusHint) {
+    private async setDNDStatus(extension: string, dnd : statusDND, hint: statusHint): Promise<void>  {
         const action = new namiLib.Actions.DbPut();
         action.Family = 'DND';
         action.Key = extension;
         action.Val = dnd;
-        const resultSend = await this.client.send(action);
-
-
+        const resultSend: any = await new Promise((resolve) =>{
+            this.client.send(action, (event: any) => {
+                resolve(event)
+            });
+        });
         (resultSend.response == 'Success')? this.setHintStatus(extension, hint) : null
     }
 
-    public async setHintStatus(extension: string, hint: statusHint) {
+    private async setHintStatus(extension: string, hint: statusHint): Promise<void>  {
         const action = new namiLib.Actions.Command();
         action.Command = `devstate change Custom:DND${extension} ${hint}`;
-        const resultSend = await this.client.send(action);
+        await new Promise((resolve) => {
+            this.client.send(action, (event:any) => {
+                this.log.info(event)
+            })
+        });
     }
 
     public async getExtensionStatus() {
@@ -172,6 +181,8 @@ export class AmiService implements OnApplicationBootstrap {
     private invalidPeer() {
         this.log.error(`Invalid AMI Salute. Not an AMI?`);
         process.exit();
+        
     }
+ 
     
 }
