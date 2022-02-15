@@ -75,12 +75,6 @@ export class AmocrmService implements OnApplicationBootstrap {
         }
     }
 
-    private validationErrors(response: PlainObject): boolean| Error {
-       return (response._total_items === 1)? true : Error();
-    }
-
-    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
-
     public async searchContact(incomingNumber: string): Promise<boolean>{
         try {
             const info: AmocrmGetContactsRequest = {
@@ -178,6 +172,12 @@ export class AmocrmService implements OnApplicationBootstrap {
         const date = new Date();
         return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminNotWork : responsibleUserId.AdminCC;
     }
+
+    private validationErrors(response: PlainObject): boolean| Error {
+        return (response._total_items === 1)? true : Error();
+     }
+ 
+    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
 
     private async connect() {
         return await this.amocrmConnect.connect();
