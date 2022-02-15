@@ -4,6 +4,7 @@ import { LoggerService } from '@app/logger/logger.service';
 import { MongoService } from '@app/mongo/mongo.service';
 import { AmocrmUsers, LdsUsersStatus } from '@app/mongo/schemas';
 import { CollectionType, DbRequestType } from '@app/mongo/types/types';
+import { SocketGateway } from '@app/socket/socket.gateway';
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from "@nestjs/schedule";
@@ -15,7 +16,8 @@ export class SyncLDSScheduleService implements OnApplicationBootstrap {
         private readonly configService: ConfigService,
         private readonly logger: LoggerService,
         private readonly axios: AxiosService,
-        private readonly mongo : MongoService
+        private readonly mongo : MongoService,
+        private readonly ws: SocketGateway
       ) {}
 
     onApplicationBootstrap() {}
@@ -56,6 +58,16 @@ export class SyncLDSScheduleService implements OnApplicationBootstrap {
             }))
         }catch(e){
             this.logger.error(`updateAmocrmUsers ${e}`)
+        }
+    }
+
+    @Cron(CronExpression.EVERY_MINUTE)
+    async getLdsUserStatus() {
+        try{
+            const result = await this.axios.getLSDUserStatus();
+            await this.ws.broadcast('lsd',result)
+        }catch(e){
+            this.logger.error(`updateLDSUserStatus ${e}`)
         }
     }
 }
