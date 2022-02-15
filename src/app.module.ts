@@ -15,17 +15,14 @@ import { MongoModule } from './mongo/mongo.module';
 import { ScheduleDataModule } from './schedule/schedule.module';
 import { TGModule } from './telegram/telegram.module';
 import { SocketModule } from './socket/socket.module';
+import { ApiModule } from './api/api.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
   imports: [
-  ConfigModule.forRoot({ load: [configuration] }),
-  AmocrmModule, 
-  LoggerModule, 
-  AsteriskModule, 
-  DatabaseModule, 
-  UtilsModule, 
-  AxiosModule, CallInfoQueueModule, MongoModule, ScheduleDataModule, TGModule, SocketModule],
+  ConfigModule.forRoot({ load: [configuration] }), AmocrmModule, LoggerModule, AsteriskModule, DatabaseModule, UtilsModule, 
+  AxiosModule, CallInfoQueueModule, MongoModule, ScheduleDataModule, TGModule, SocketModule, ApiModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
   exports: [ConfigModule]
