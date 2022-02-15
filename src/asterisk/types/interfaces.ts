@@ -167,10 +167,6 @@ export enum AsteriskChannelStateDesc {
     Down = "Down",
     Busy = "Busy"
 }
-export enum statusDND {
-    on = '1',
-    off = ''
-}
 
 export enum statusHint {
     on ='Busy',
@@ -229,3 +225,23 @@ export enum CallType {
     Incoming = "incoming",
     Outgoing = "outgoing",
 }
+
+export enum statusDND {
+    on = '1',
+    off = ''
+}
+
+export enum apiStatusDND {
+    on = 'on',
+    off = 'off'
+}
+
+export const dndStatusMap: { [code in apiStatusDND]: statusDND } = {
+    [apiStatusDND.on]: statusDND.on,
+    [apiStatusDND.off]: statusDND.off,
+};
+
+export const hintStatusMap: { [code in apiStatusDND]: statusHint } = {
+    [apiStatusDND.on]: statusHint.on,
+    [apiStatusDND.off]: statusHint.off,
+};
