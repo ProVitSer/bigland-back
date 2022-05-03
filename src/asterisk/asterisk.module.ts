@@ -19,18 +19,18 @@ import { AmocrmModule } from '@app/amocrm/amocrm.module';
         AmocrmModule
     ],
     providers: [
-        // {
-        //     provide: 'ARI',
-        //     useFactory: async (configService: ConfigService) => {
-        //         return {
-        //             ariClient: await ARI.connect(
-        //                 configService.get('asterisk.ari.url'), 
-        //                 configService.get('asterisk.ari.user'), 
-        //                 configService.get('asterisk.ari.password')),
-        //         };
-        //     },
-        //     inject: [ConfigService]
-        // },
+        {
+            provide: 'ARI',
+            useFactory: async (configService: ConfigService) => {
+                return {
+                    ariClient: await ARI.connect(
+                        configService.get('asterisk.ari.url'), 
+                        configService.get('asterisk.ari.user'), 
+                        configService.get('asterisk.ari.password')),
+                };
+            },
+            inject: [ConfigService]
+        },
         {
             provide: 'AMI',
             useFactory: async (configService: ConfigService) => {
@@ -44,11 +44,11 @@ import { AmocrmModule } from '@app/amocrm/amocrm.module';
             },
             inject: [ConfigService]
         },
-        //AriService,
+        AriService,
         AmiService,
         AmiEventsHandlers
     ],
-    exports: [/*'ARI', AriService,*/ 'AMI', AmiService]
+    exports: ['ARI', AriService, 'AMI', AmiService]
 })
 
 export class AsteriskModule {}
