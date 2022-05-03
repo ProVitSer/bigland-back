@@ -46,6 +46,7 @@ export class AmiService implements OnApplicationBootstrap {
     };
 
     private async parseAmiEvent(event: AsteriskHungupEvent): Promise<void>{
+        this.log.info(event)
         if(checkCDR && event.calleridnum.toString().length < 4 &&
         event.uniqueid == event.linkedid &&
         event.connectedlinenum.toString().length > 4 &&
@@ -57,6 +58,15 @@ export class AmiService implements OnApplicationBootstrap {
             await this.callQueue.runCallQueueJob('Outgoing',{ uniqueid: event.uniqueid, type: CallType.Outgoing});
 
         } 
+        else if(checkCDR && event.calleridnum.toString().length < 4 &&
+        event.connectedlinenum.toString().length > 4 &&
+        event.cause == AsteriskCause.NORMAL_CLEARING
+        ){
+            checkCDR = false;
+            setTimeout(this.changeValueCDR,1000);
+            this.log.info(`Входящий ${event.linkedid}`);
+            await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.linkedid, type: CallType.Incoming});
+        }
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
         event.uniqueid == event.linkedid &&
         event.connectedlinenum.toString().length > 4 &&
@@ -83,7 +93,7 @@ export class AmiService implements OnApplicationBootstrap {
     public async sendAmiCall(localExtension: string, outgoingNumber: string): Promise<void> {
         this.log.info(`Исходящий вызов из webhook CRM: внутренний номер ${localExtension} внешний номер ${outgoingNumber}`);
         const action = new namiLib.Actions.Originate();
-        action.channel = `SIP/${localExtension}`; 
+        action.channel = `PJSIP/${localExtension}`; 
         action.callerid = localExtension;
         action.priority = '1';
         action.timeout = '50000';
@@ -92,6 +102,7 @@ export class AmiService implements OnApplicationBootstrap {
         action.async = 'yes';
         const resultInitCall : any = await new Promise((resolve) =>{
             this.client.send(action, (event: any) => {
+                this.log.info(event);
                 resolve(event);
             });
         });
@@ -135,6 +146,31 @@ export class AmiService implements OnApplicationBootstrap {
         }))
 
         return extensionStatusList;
+    }
+
+    public async getCallStatus(): Promise<AsteriskStatusResponse>{
+        const action = new namiLib.Actions.Status();
+        let callInfo: AsteriskStatusResponse = await new Promise((resolve) =>{
+            this.client.send(action, (event: any) => {
+                resolve(event);
+            });
+        });
+        return this.deleteNoUserProp(callInfo) as AsteriskStatusResponse
+    }
+
+    private deleteNoUserProp(callInfo: AsteriskStatusResponse): any {
+        try{
+            return callInfo.events.map( (event: EventsStatus) => {
+                delete event.lines;
+                delete event.EOL;
+                delete event.variables;
+                return event
+            })
+        } catch(e){
+            this.log.error(e)
+            return callInfo;
+        }
+
     }
 
     private async getDNDStatus(extension: string): Promise<AsteriskDNDStatusResponse> {
