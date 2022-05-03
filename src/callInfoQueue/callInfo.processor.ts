@@ -33,6 +33,9 @@ import { directionType } from '@app/amocrm/types/interfaces';
     public async outgoingCallJob(job: Bull.Job<any>, done: Bull.DoneCallback): Promise<any> {
         try{
           const result = await this.mysql.searchOutgoingCallInfoInCdr(job.data.uniqueid);
+          if (result == undefined && result == null){
+            return done()
+          }
           const resultSearchId = await this.getAmocrmId(this.utils.replaceChannel(result.channel));
           const jobProgress =  await this.amocrm.sendCallInfoToCRM(result,resultSearchId[0]?.amocrmId,directionType.outbound);
           (jobProgress instanceof Error)?done(jobProgress): done();
@@ -46,9 +49,12 @@ import { directionType } from '@app/amocrm/types/interfaces';
     public async incomingCallJob(job: Bull.Job<any>, done: Bull.DoneCallback): Promise<any> {
         try{
           const result = await this.mysql.searchIncomingCallInfoInCdr(job.data.uniqueid);
+          if (result.length == 0){
+            return done()
+          }
           const resultSearchId = await this.getAmocrmId(this.utils.replaceChannel(result[0].dstchannel));
           const jobProgress = await this.amocrm.sendCallInfoToCRM(result[0],resultSearchId[0]?.amocrmId,directionType.inbound);
-          (jobProgress instanceof Error)?done(jobProgress): done();
+          (jobProgress instanceof Error)? done(jobProgress): done();
         }catch(e){
             this.logger.error(`incomingCallJob ${e}`);
         }

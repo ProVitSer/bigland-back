@@ -22,7 +22,7 @@ export class CallInfoService {
 
     private async addToCallQueue(type: string , event: PlainObject): Promise<Bull.JobId> {
         try{
-            const result =  await this.callQueue.add(type, event, { attempts: 5,removeOnComplete: true, delay: 30000, backoff: 10000 });
+            const result =  await this.callQueue.add(type, event, { attempts: 5,removeOnComplete: true, delay: 40000, backoff: 10000 });
             return result.id
         }catch(e){
             this.log.error(`Проблемы с добавлением события в очередь ${e}`);
