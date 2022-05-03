@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class UtilsService {
 
     replaceChannel(channel: string){
-        return channel.replace(/(SIP\/)(\d{3})-(.*)/, `$2`);
+        return channel.replace(/(PJSIP\/)(\d{3})-(.*)/, `$2`);
     };
 
 }
