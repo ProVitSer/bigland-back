@@ -21,7 +21,7 @@ export class LoggerMiddleware implements NestMiddleware {
         this.getError(error);
     });
     response.on("finish", () => {
-        this.logMiddleware(request, response, this.requestErrorMessage);
+        //this.logMiddleware(request, response, this.requestErrorMessage);
     });
 
     next();

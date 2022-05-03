@@ -35,10 +35,11 @@ export class DatabaseService {
       if(result.length !== 0){
         return result;
       } else {
-        throw Error('Не найдены данные по входящему вызову вызову')
+        return result;
       }
       }catch(e){
         this.logger.error(`searchIncomingCallInfoInCdr ${e}`)
+        return;
       }
 
     }
@@ -65,10 +66,11 @@ export class DatabaseService {
         if(result.length !== 0){
           return result[0];
         } else {
-          throw Error('Не найдены данные по исходящему вызову')
+          return result[0]
         }
       }catch(e){
         this.logger.error(`searchOutgoingCallInfoInCdr ${e}`)
+        return;
       }
     }
 }
