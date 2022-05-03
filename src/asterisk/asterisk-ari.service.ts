@@ -7,6 +7,7 @@ import * as moment from 'moment';
 import { AsteriskARIStasisStartEvent } from './types/interfaces';
 import { AmocrmService } from '@app/amocrm/amocrm.service';
 import { operatorCIDNumber } from '@app/config/config';
+import { Client } from 'ari-client';
 
 export interface PlainObject { [key: string]: any }
 
@@ -16,7 +17,7 @@ export class AriService implements OnApplicationBootstrap {
     private client: any;
 
     constructor(
-        @Inject('ARI') private readonly ari: any, 
+        @Inject('ARI') private readonly ari: Client, 
         private readonly configService: ConfigService,
         private readonly log: LoggerService,
         private readonly amocrm: AmocrmService
@@ -24,24 +25,45 @@ export class AriService implements OnApplicationBootstrap {
     }
 
     public async onApplicationBootstrap() {
-        this.client = await this.ari;
-        this.client.ariClient.once('StasisStart', async (stasisStartEvent: AsteriskARIStasisStartEvent, dialed: Ari.Channel) => {
-            this.log.info(`Событие входящего вызова ${stasisStartEvent}`);
-            const timestamp = moment().format('YYYY-MM-DDTHH:mm:ss');
-            this.routingCall(stasisStartEvent);
+        this.client = this.ari;
+        this.client.ariClient.on('StasisStart', async (stasisStartEvent: AsteriskARIStasisStartEvent, dialed: Ari.Channel) => {
+            try {
+                this.log.info(`Событие входящего вызова ${JSON.stringify(stasisStartEvent)}`);
+                const timestamp = moment().format('YYYY-MM-DDTHH:mm:ss');
+                await this.checkInAmo(stasisStartEvent);
+                return this.continueDialplan(stasisStartEvent.channel.id)
+            }catch(e){
+                this.log.info("ARI", e)
+            }
+
         });
         this.client.ariClient.start(this.configService.get('asterisk.ari.application') );
+
     };
 
-    private routingCall(event: AsteriskARIStasisStartEvent){
-        const incomingNumber = (event.channel.caller.number.length == 10) ? `+7${event.channel.caller.number}`: event.channel.caller.number;
-        const incomingTrunk = event.channel.dialplan.exten as operatorCIDNumber;
-        this.amocrm.actionsInAmocrm(incomingNumber,incomingTrunk)
-        this.continueDialplan(event.channel.id)
+    private async checkInAmo(event: AsteriskARIStasisStartEvent): Promise<void>{
+        try {
+            const incomingNumber = (event.channel.caller.number.length == 10) ? `+7${event.channel.caller.number}`: event.channel.caller.number;
+            const incomingTrunk = event.channel.dialplan.exten as operatorCIDNumber;
+            return await this.amocrm.actionsInAmocrm(incomingNumber,incomingTrunk);
+        }catch(e){
+            this.log.info("ARI routingCall", e)
+        }
+
     }
 
-    private continueDialplan(channelId: string){
-        this.client.channels.continueInDialplan({ channelId: channelId })
+    private async continueDialplan(channelId: string): Promise<void> {
+        try {
+            return await new Promise((resolve) =>{
+                this.client.ariClient.channels.continueInDialplan({ channelId: channelId }, (event: any) => {
+                    this.log.info(`ARI continueDialplan ${event}`)
+                    resolve(event)
+                })
+            })
+        } catch(e){
+            this.log.info("ARI continueDialplan error", e)
+        }
+
     }
 
 
