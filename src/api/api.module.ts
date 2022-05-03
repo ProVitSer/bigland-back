@@ -5,10 +5,12 @@ import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ApiController } from './api.controller';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { ApiService } from './api.service';
 
 @Module({
   imports:[ConfigModule, LoggerModule, AsteriskModule, AuthModule],
-  controllers: [ApiController]
+  controllers: [ApiController],
+  providers: [ApiService]
 })
 
 export class ApiModule {
