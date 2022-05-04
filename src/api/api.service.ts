@@ -30,7 +30,9 @@ export class ApiService {
               "data": callIfo[0]
             };
             return "asterisk_cb(" + JSON.stringify(sendStatus) + ");"
-            default:
+          case "cdr":
+            return {}
+          default:
               this.log.error(`Ошибка запроса ${query._action}`);
               this.log.error(`Ошибка запроса ${query}`);
               throw  new Error("Ошибка запроса")
