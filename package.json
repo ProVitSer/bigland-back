@@ -37,6 +37,7 @@
     "@nestjs/sequelize": "^8.0.0",
     "@nestjs/typeorm": "^8.0.2",
     "@nestjs/websockets": "^8.0.7",
+    "@types/uuid": "^8.3.4",
     "@types/ws": "^8.2.2",
     "amocrm-js": "^2.0.9",
     "ari-client": "^2.2.0",
