@@ -41,6 +41,7 @@ import { directionType } from '@app/amocrm/types/interfaces';
           (jobProgress instanceof Error)?done(jobProgress): done();
         }catch(e){
             this.logger.error(`outgoingCallJob ${e}`);
+            return done()
         }
 
     }
@@ -57,6 +58,7 @@ import { directionType } from '@app/amocrm/types/interfaces';
           (jobProgress instanceof Error)? done(jobProgress): done();
         }catch(e){
             this.logger.error(`incomingCallJob ${e}`);
+            return done()
         }
 
     }
