@@ -19,6 +19,6 @@ export class LoggerService implements LoggerService {
 
     error(message: string, context?: any): void {
         this.logger.error(message, { context });
-        //this.tg.tgAlert(message);
+        this.tg.tgAlert(message);
     }
 }
