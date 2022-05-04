@@ -11,7 +11,7 @@ import { LoggerModule } from '@app/logger/logger.module';
   ],
   providers: [
     {
-      provide: 'AMI',
+      provide: 'GSM',
       useFactory: async (configService: ConfigService) => {
           return new namiLib.Nami({
               username: configService.get('gsmGateway.username'),
