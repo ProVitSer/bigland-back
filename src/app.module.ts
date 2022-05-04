@@ -17,12 +17,13 @@ import { TGModule } from './telegram/telegram.module';
 import { SocketModule } from './socket/socket.module';
 import { ApiModule } from './api/api.module';
 import { AuthModule } from './auth/auth.module';
+import { GsmGatewayModule } from './gsm-gateway/gsm-gateway.module';
 
 
 @Module({
   imports: [
   ConfigModule.forRoot({ load: [configuration] }), AmocrmModule, LoggerModule, AsteriskModule, DatabaseModule, UtilsModule, 
-  AxiosModule, CallInfoQueueModule, MongoModule, ScheduleDataModule, TGModule, SocketModule, ApiModule, AuthModule],
+  AxiosModule, CallInfoQueueModule, MongoModule, ScheduleDataModule, TGModule, SocketModule, ApiModule, AuthModule, GsmGatewayModule],
   controllers: [AppController],
   providers: [AppService],
   exports: [ConfigModule]
