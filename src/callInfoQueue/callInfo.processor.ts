@@ -36,7 +36,7 @@ import { directionType } from '@app/amocrm/types/interfaces';
           if (result == undefined && result == null){
             return done()
           }
-          const resultSearchId = await this.getAmocrmId(this.utils.replaceChannel(result.channel));
+          const resultSearchId = await this.getAmocrmId(UtilsService.replaceChannel(result.channel));
           const jobProgress =  await this.amocrm.sendCallInfoToCRM(result,resultSearchId[0]?.amocrmId,directionType.outbound);
           (jobProgress instanceof Error)?done(jobProgress): done();
         }catch(e){
@@ -53,7 +53,7 @@ import { directionType } from '@app/amocrm/types/interfaces';
           if (result.length == 0){
             return done()
           }
-          const resultSearchId = await this.getAmocrmId(this.utils.replaceChannel(result[0].dstchannel));
+          const resultSearchId = await this.getAmocrmId(UtilsService.replaceChannel(result[0].dstchannel));
           const jobProgress = await this.amocrm.sendCallInfoToCRM(result[0],resultSearchId[0]?.amocrmId,directionType.inbound);
           (jobProgress instanceof Error)? done(jobProgress): done();
         }catch(e){

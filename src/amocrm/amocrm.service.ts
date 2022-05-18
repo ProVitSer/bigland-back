@@ -186,7 +186,7 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     private getResponsibleUserId(): responsibleUserId {
         const date = new Date();
-        return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminNotWork : responsibleUserId.AdminCC;
+        return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminCC : responsibleUserId.AdminCC;
     }
 
     private validationErrors(response: PlainObject): boolean| Error {

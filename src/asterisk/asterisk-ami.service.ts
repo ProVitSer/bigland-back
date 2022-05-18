@@ -9,6 +9,7 @@ import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
 import * as namiLib from 'nami';
 import * as util from 'util';
 import { DNDDto } from '@app/api/dto/dnd.dto';
+import { IDnd } from '@app/api/types/interfaces';
 
 export interface PlainObject { [key: string]: any }
 let checkCDR = true;
@@ -111,7 +112,7 @@ export class AmiService implements OnApplicationBootstrap {
     }
 
 
-    public async setDNDStatus(data: DNDDto): Promise<any>  {
+    public async setDNDStatus(data: IDnd): Promise<any>  {
         const extensionStatusList = {};
 
         await Promise.all(data.sip_id.map( async (sip_id: string) => {
