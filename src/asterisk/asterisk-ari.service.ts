@@ -45,7 +45,7 @@ export class AriService implements OnApplicationBootstrap {
         try {
             const incomingNumber = (event.channel.caller.number.length == 10) ? `+7${event.channel.caller.number}`: event.channel.caller.number;
             const incomingTrunk = event.channel.dialplan.exten as operatorCIDNumber;
-            return await this.amocrm.actionsInAmocrm(incomingNumber,incomingTrunk);
+            return await this.amocrm.actionsInAmocrm(incomingNumber, incomingTrunk);
         }catch(e){
             this.log.info("ARI routingCall", e)
         }
@@ -56,7 +56,7 @@ export class AriService implements OnApplicationBootstrap {
         try {
             return await new Promise((resolve) =>{
                 this.client.ariClient.channels.continueInDialplan({ channelId: channelId }, (event: any) => {
-                    this.log.info(`ARI continueDialplan ${event}`)
+                    this.log.info(`ARI continueDialplan ${channelId}`)
                     resolve(event)
                 })
             })

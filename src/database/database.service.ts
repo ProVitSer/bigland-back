@@ -16,7 +16,7 @@ export class DatabaseService {
     public async searchIncomingCallInfoInCdr(uniqueid: string): Promise<Cdr[]> {
       try{
         this.logger.info(`Входящий вызов ${uniqueid}`)
-        const result  = await this.getCallInfo.findAll({
+        const resultFind  = await this.getCallInfo.findAll({
           raw: true,
           attributes: ["calldate", "src", "dcontext", "dstchannel", "billsec", "disposition", "uniqueid", "recordingfile"],
           where: {
@@ -27,16 +27,12 @@ export class DatabaseService {
           order: [
               ['billsec', 'DESC'],
           ],
-          limit: 1
+          //limit: 1
       });
 
+      const result = resultFind.filter((cdr: Cdr) => cdr.disposition === "ANSWERED")
       this.logger.info(result);
-
-      if(result.length !== 0){
-        return result;
-      } else {
-        return result;
-      }
+      return result;
       }catch(e){
         this.logger.error(`searchIncomingCallInfoInCdr ${e}`)
         return;

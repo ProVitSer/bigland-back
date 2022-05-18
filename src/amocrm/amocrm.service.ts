@@ -46,7 +46,6 @@ export class AmocrmService implements OnApplicationBootstrap {
         try {
             const { uniqueid, src, dst, calldate, billsec, disposition, recordingfile } = result;
             const date = moment(calldate).subtract(3, "hour").unix();
-            console.log(date)
 
             const callInfo : AmocrmAddCallInfo = {
                 "direction": direction,
@@ -95,7 +94,6 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     private async createContact(incomingNumber: string, incomingTrunk: operatorCIDNumber): Promise<number> {
         try {
-            console.log(incomingNumber,incomingTrunk)
             const responsibleUserId = this.getResponsibleUserId();
             const contact: AmocrmCreateContact = {
                 name: `Новый клиент ${incomingNumber}`,
