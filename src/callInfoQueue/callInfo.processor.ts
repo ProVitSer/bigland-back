@@ -16,6 +16,7 @@ import { CollectionType, DbRequestType } from '@app/mongo/types/types';
 import { UtilsService } from '@app/utils/utils.service';
 import { AmocrmService } from '@app/amocrm/amocrm.service';
 import { directionType } from '@app/amocrm/types/interfaces';
+import { Cdr } from '@app/database/entities/Cdr';
 
 
   @Processor('callInfo')
@@ -53,9 +54,14 @@ import { directionType } from '@app/amocrm/types/interfaces';
           if (result.length == 0){
             return done()
           }
-          const resultSearchId = await this.getAmocrmId(UtilsService.replaceChannel(result[0].dstchannel));
-          const jobProgress = await this.amocrm.sendCallInfoToCRM(result[0],resultSearchId[0]?.amocrmId,directionType.inbound);
-          (jobProgress instanceof Error)? done(jobProgress): done();
+          return await Promise.all(result.map( async (cdr: Cdr) => {
+
+            const resultSearchId = await this.getAmocrmId(UtilsService.replaceChannel(cdr.dstchannel));
+            const jobProgress = await this.amocrm.sendCallInfoToCRM(cdr,resultSearchId[0]?.amocrmId,directionType.inbound);
+            (jobProgress instanceof Error)? done(jobProgress): done();
+          }));
+
+          
         }catch(e){
             this.logger.error(`incomingCallJob ${e}`);
             return done()

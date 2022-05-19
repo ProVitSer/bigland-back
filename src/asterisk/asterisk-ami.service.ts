@@ -51,7 +51,7 @@ export class AmiService implements OnApplicationBootstrap {
         if(checkCDR && event.calleridnum.toString().length < 4 &&
         event.uniqueid == event.linkedid &&
         event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY].includes(event?.cause))
+        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -71,7 +71,7 @@ export class AmiService implements OnApplicationBootstrap {
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
         event.uniqueid == event.linkedid &&
         event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY].includes(event?.cause))
+        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);

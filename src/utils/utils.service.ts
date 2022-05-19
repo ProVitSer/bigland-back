@@ -7,6 +7,16 @@ export class UtilsService {
         return channel.replace(/(PJSIP\/)(\d{3})-(.*)/, `$2`);
     };
 
+    static checkDstChannel(str: string): boolean {
+        const regexp = new RegExp('^PJSIP\/[0-9][0-9][0-9]-.*$'); 
+        return regexp.test(str)
+    }
+
+    static isGsmChannel(str: string): boolean{
+        const regexp = new RegExp('^PJSIP\/GSM-.*$'); 
+        return regexp.test(str)
+    }
+
     static randomIntFromArray(items: Array<string>): string {
         return items[Math.floor(Math.random() * items.length)];
     };
