@@ -12,17 +12,15 @@ export class AmocrmDto  {
     @IsString()
     _action: AmocrmActionStatus
 
-    @IsString()
-    rand: string
+    rand?: string
 
-    @IsString()
-    from: string
+    from?: string
 
-    @IsString()
-    to: string
+    to?: string
 
-    @IsString()
-    as: string
+    as?: string
+
+    _?: string
 }
 
 export enum AmocrmActionStatus {
