@@ -2,20 +2,23 @@ import { AmiService } from '@app/asterisk/asterisk-ami.service';
 import { AxiosService } from '@app/axios/axios.service';
 import { DatabaseService } from '@app/database/database.service';
 import { LoggerService } from '@app/logger/logger.service';
-import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import io from 'socket.io'
+import { OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, 
+  SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
 
-@WebSocketGateway(7777)
-export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect  {
+
+@WebSocketGateway(7777, { transports: ['websocket'] })
+export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect  {
 
   constructor(
     private readonly log: LoggerService,
     private readonly ami: AmiService,
-    private readonly mondo: DatabaseService,
+    private readonly mongo: DatabaseService,
     private readonly  axios: AxiosService
 
-  ){}
+  ){
+    console.log('Notification service started on port 8080');
+  }
   
   @WebSocketServer()
   server: Server;
@@ -23,39 +26,52 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect  
 
   @SubscribeMessage('get-infoList')
   getInfoList(client: any, payload: any): any {
+    console.log(JSON.stringify(client))
+    console.log(JSON.stringify(payload))
 
   }
 
   @SubscribeMessage('transfer')
   tarsferCall(client: any, payload: any): any {
+    console.log(JSON.stringify(client))
+    console.log(JSON.stringify(payload))
 
   }
 
   @SubscribeMessage('dnd')
   setDNDStatus(client: any, payload: any): any {
+    console.log(JSON.stringify(client))
+    console.log(JSON.stringify(payload))
 
   }
 
   @SubscribeMessage('customdnd')
   setCustomDNDStatus(client: any, payload: any): any {
+    console.log(JSON.stringify(client))
+    console.log(JSON.stringify(payload))
 
   }
   
 
+  public afterInit() {
+    console.log('wss initialized');
+  }
 
   public handleConnection(client: WebSocket, ...args: any[]){
+    console.log(`Подключился новый пользователь ${client}`)
+
     this.wsClients.push(client)
     this.log.info(`Подключился новый пользователь ${client}`)
   }
 
-  public handleDisconnect(client: io.Socket){
-    this.log.info(`Отключился пользователь ${client}`)
+  public handleDisconnect(client: WebSocket){
+    console.log(`Отключился пользователь ${client}`)
   }
 
-  private Broadcast(event: any, message: any) {
+  public async broadcast(event: any, message: any) {
     const broadCastMessage = JSON.stringify(message);
     for (let client of this.wsClients) {
-        (client as any).emit(event, broadCastMessage);
+        await (client as any).send({event: event, message: broadCastMessage});
     }
   }
   

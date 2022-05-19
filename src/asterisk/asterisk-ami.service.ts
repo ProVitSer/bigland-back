@@ -4,10 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AsteriskCause, AsteriskDNDStatusResponse, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, EventsStatus, statusDND, statusHint } from './types/interfaces';
+import { AsteriskCause, AsteriskDNDStatusResponse, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, dndStatusMap, EventsStatus, hintStatusMap, statusDND, statusHint } from './types/interfaces';
 import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
 import * as namiLib from 'nami';
 import * as util from 'util';
+import { DNDDto } from '@app/api/dto/dnd.dto';
+import { IDnd } from '@app/api/types/interfaces';
 
 export interface PlainObject { [key: string]: any }
 let checkCDR = true;
@@ -45,10 +47,31 @@ export class AmiService implements OnApplicationBootstrap {
     };
 
     private async parseAmiEvent(event: AsteriskHungupEvent): Promise<void>{
+        this.log.info(event)
         if(checkCDR && event.calleridnum.toString().length < 4 &&
         event.uniqueid == event.linkedid &&
         event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY].includes(event?.cause))
+        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
+        {
+            checkCDR = false;
+            setTimeout(this.changeValueCDR,1000);
+            this.log.info(`Исходящий ${event.uniqueid}`);
+            await this.callQueue.runCallQueueJob('Outgoing',{ uniqueid: event.uniqueid, type: CallType.Outgoing});
+
+        } 
+        else if(checkCDR && event.calleridnum.toString().length < 4 &&
+        event.connectedlinenum.toString().length > 4 &&
+        event.cause == AsteriskCause.NORMAL_CLEARING
+        ){
+            checkCDR = false;
+            setTimeout(this.changeValueCDR,1000);
+            this.log.info(`Входящий ${event.linkedid}`);
+            await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.linkedid, type: CallType.Incoming});
+        }
+        else if(checkCDR && event.calleridnum.toString().length > 4 &&
+        event.uniqueid == event.linkedid &&
+        event.connectedlinenum.toString().length > 4 &&
+        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -71,7 +94,7 @@ export class AmiService implements OnApplicationBootstrap {
     public async sendAmiCall(localExtension: string, outgoingNumber: string): Promise<void> {
         this.log.info(`Исходящий вызов из webhook CRM: внутренний номер ${localExtension} внешний номер ${outgoingNumber}`);
         const action = new namiLib.Actions.Originate();
-        action.channel = `SIP/${localExtension}`; 
+        action.channel = `PJSIP/${localExtension}`; 
         action.callerid = localExtension;
         action.priority = '1';
         action.timeout = '50000';
@@ -80,6 +103,7 @@ export class AmiService implements OnApplicationBootstrap {
         action.async = 'yes';
         const resultInitCall : any = await new Promise((resolve) =>{
             this.client.send(action, (event: any) => {
+                this.log.info(event);
                 resolve(event);
             });
         });
@@ -87,48 +111,79 @@ export class AmiService implements OnApplicationBootstrap {
 
     }
 
-    public async trasferCall(channelId: string, extension: string): Promise<void> {
-        this.log.info(`Перевод вызов через панель канала ${channelId} на добавочный ${extension}`);
-        const action = new namiLib.Actions.BlindTransfer();
-        action.Channel = channelId;
-        action.Context = 'from-internal-xfer';
-        action.Exten = extension;
-        const resultSend : any = await new Promise((resolve) =>{
+
+    public async setDNDStatus(data: IDnd): Promise<any>  {
+        const extensionStatusList = {};
+
+        await Promise.all(data.sip_id.map( async (sip_id: string) => {
+
+            const checkExtension = await this.getDNDStatus(sip_id);
+            if (checkExtension.response === 'Error'){
+                extensionStatusList[sip_id] = {status: 'error'}
+                return;
+            }
+
+
+            const action = new namiLib.Actions.DbPut();
+            action.Family = 'DND';
+            action.Key = sip_id;
+            action.Val = dndStatusMap[data.dnd_status];
+            const resultSend: AsteriskStatusResponse = await new Promise((resolve) => {
+                this.client.send(action, (event: any) => {
+                    resolve(event)
+                });
+            });
+            this.log.info(resultSend);
+
+            const hint = hintStatusMap[data.dnd_status]
+
+            if(resultSend.response == 'Success'){
+                extensionStatusList[sip_id] = {status: 'success'}
+
+                return this.setHintStatus(sip_id, hint)
+            } else {
+                return;
+            }
+        }))
+
+        return extensionStatusList;
+    }
+
+    public async getCallStatus(): Promise<AsteriskStatusResponse>{
+        const action = new namiLib.Actions.Status();
+        let callInfo: AsteriskStatusResponse = await new Promise((resolve) =>{
             this.client.send(action, (event: any) => {
                 resolve(event);
             });
         });
-        this.log.info(resultSend)
+        return this.deleteNoUserProp(callInfo) as AsteriskStatusResponse
     }
 
-    public async getDNDStatus(extension: string): Promise<void> {
+    private deleteNoUserProp(callInfo: AsteriskStatusResponse): any {
+        try{
+            return callInfo.events.map( (event: EventsStatus) => {
+                delete event.lines;
+                delete event.EOL;
+                delete event.variables;
+                return event
+            })
+        } catch(e){
+            this.log.error(e)
+            return callInfo;
+        }
+
+    }
+
+    private async getDNDStatus(extension: string): Promise<AsteriskDNDStatusResponse> {
         const action = new namiLib.Actions.DbGet();
         action.Family = 'DND';
         action.Key = extension;
-        const resultSend : AsteriskDNDStatusResponse = await new Promise((resolve) =>{
+        return await new Promise((resolve) =>{
             this.client.send(action, (event: any) => {
+                this.log.info(event);
                 resolve(event);
             });
         });
-        this.log.info(resultSend);
-
-        return (resultSend.events[0].val == '')? 
-            this.setDNDStatus(extension, statusDND.on,statusHint.on) : 
-            this.setDNDStatus(extension, statusDND.off,statusHint.off)
-    }
-
-    private async setDNDStatus(extension: string, dnd : statusDND, hint: statusHint): Promise<void>  {
-        const action = new namiLib.Actions.DbPut();
-        action.Family = 'DND';
-        action.Key = extension;
-        action.Val = dnd;
-        const resultSend: AsteriskStatusResponse = await new Promise((resolve) => {
-            this.client.send(action, (event: any) => {
-                resolve(event)
-            });
-        });
-        this.log.info(resultSend);
-        return (resultSend.response == 'Success')? this.setHintStatus(extension, hint) : null
     }
 
     private async setHintStatus(extension: string, hint: statusHint): Promise<void>  {
@@ -138,29 +193,9 @@ export class AmiService implements OnApplicationBootstrap {
             this.client.send(action)
             resolve();
         });
+        
     }
 
-    public async getExtensionStatus() {
-        const action = new namiLib.Actions.Status();
-        const resultExtensionStatus: AsteriskStatusResponse = await new Promise((resolve, reject) => {
-            this.client.send(action, (event:any)=>{
-                resolve(event)
-            })
-        });
-        return this.formatExtenStatus(resultExtensionStatus)
-    }
-
-    private formatExtenStatus(status: AsteriskStatusResponse){
-        return status.events.map( (event: EventsStatus) => {
-            if (event.hasOwnProperty(`lines`) && event.hasOwnProperty(`EOL`) && event.hasOwnProperty(`variables`)) {
-                delete event.lines;
-                delete event.EOL;
-                delete event.variables;
-                return event;
-            }
-        });
-
-    }
 
     private changeValueCDR(){
         checkCDR = true;

@@ -37,13 +37,15 @@ export class AmocrmService implements OnApplicationBootstrap {
                 await this.createLeads(incomingNumber, incomingTrunk, idCreateContact);
             }
         } catch(e){
-            this.logger.error(`Ошибка взаимодействия с Amocrm по Лидам,Контактам ${e}`);
+            this.logger.info(console.log(`Ошибка взаимодействия с Amocrm по Лидам,Контактам`, e));
+            return
         }
     }
 
     public async sendCallInfoToCRM(result: Cdr, amocrmId : number,  direction : directionType) {
         try {
             const { uniqueid, src, dst, calldate, billsec, disposition, recordingfile } = result;
+            const date = moment(calldate).subtract(3, "hour").unix();
 
             const callInfo : AmocrmAddCallInfo = {
                 "direction": direction,
@@ -57,8 +59,8 @@ export class AmocrmService implements OnApplicationBootstrap {
                 "responsible_user_id": amocrmId,
                 "created_by": amocrmId,
                 "updated_by": amocrmId,
-                "created_at": moment(calldate).unix(),
-                "updated_at": moment(calldate).unix(),
+                "created_at": date,
+                "updated_at": date,
             }
 
             this.logger.info(callInfo);
@@ -67,7 +69,7 @@ export class AmocrmService implements OnApplicationBootstrap {
                 this.logger.error(resultSendCallIfo.data['validation-errors'][0].errors);
                 throw Error(resultSendCallIfo.data['validation-errors'][0].errors)
             } else {
-                this.logger.error(resultSendCallIfo.data);
+                this.logger.info(resultSendCallIfo.data);
                 return this.validationErrors(resultSendCallIfo.data);
             }
         } catch(e){
@@ -75,20 +77,14 @@ export class AmocrmService implements OnApplicationBootstrap {
         }
     }
 
-    private validationErrors(response: PlainObject): boolean| Error {
-       return (response._total_items === 1)? true : Error();
-    }
-
-    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
-
     public async searchContact(incomingNumber: string): Promise<boolean>{
         try {
             const info: AmocrmGetContactsRequest = {
                 query: incomingNumber
             }
             const result: AmocrmGetContactsResponse = (await this.amocrm.request.get(amocrmAPI.contacts, info))?.data;
-            this.logger.info(`Результат поиска контакта ${incomingNumber}: ${result}`);
-            return (Object.keys(result).length == 0)? false : true;
+            this.logger.info(`Результат поиска контакта ${incomingNumber}: ${JSON.stringify(result)}`);
+            return (result == undefined)? false : true;
         } catch(e){
             this.logger.error(`searchContact ${incomingNumber} ${e}`);
             throw e;
@@ -117,16 +113,22 @@ export class AmocrmService implements OnApplicationBootstrap {
                         field_name: "LG Tel",
                         field_code: null,
                         values: [{
-                            value: sipTrunkMap[incomingTrunk]
+                            value: (sipTrunkMap[incomingTrunk]) ? sipTrunkMap[incomingTrunk] : incomingTrunk
                         }]
                     }]
             };
 
-            const result: AmocrmCreateContactResponse = (await this.amocrm.request.port(amocrmAPI.contacts, contact))?.data;
-            this.logger.info(`Результат создание нового контакта по номеру  ${incomingNumber}: ${result._embedded.contacts}`);
-            return result._embedded.contacts[0].id;
+            const result = (await this.amocrm.request.post(amocrmAPI.contacts, [contact]))
+            if(result.data.status != undefined && [400,401].includes(result.data.status)){
+                this.logger.error(result.data['validation-errors'][0].errors);
+                throw Error(result.data['validation-errors'][0].errors)
+            } else {
+                this.logger.info(console.log(`Результат создание нового контакта по номеру  ${incomingNumber}: `, result.data));
+                let info: AmocrmCreateContactResponse = result.data
+                return info._embedded.contacts[0].id;
+            }
         } catch(e) {
-            this.logger.error(`createContact ${incomingNumber} ${e}`);
+            this.logger.error(e);
             throw e;
         }
 
@@ -145,7 +147,7 @@ export class AmocrmService implements OnApplicationBootstrap {
                     field_id: 1288762,
                     field_name: "LG Tel",
                     values: [{
-                        value: sipTrunkMap[incomingTrunk]
+                        value: (sipTrunkMap[incomingTrunk]) ? sipTrunkMap[incomingTrunk] : incomingTrunk
                     }]
                 }],
                 _embedded: {
@@ -154,30 +156,42 @@ export class AmocrmService implements OnApplicationBootstrap {
                 }]}
             };
 
-            if (numberDescriptionkMap[incomingTrunk] !== "") {
+            if (numberDescriptionkMap[incomingTrunk]) {
                 lead.custom_fields_values.push({
                     field_id: 1274981,
                     field_name: "Поселок",
                     values: [{
-                        value: numberDescriptionkMap[incomingTrunk],
+                        value: (numberDescriptionkMap[incomingTrunk]) ? numberDescriptionkMap[incomingTrunk] : ""  ,
                         enum: 2947510
                     }]
                 })
             };
             this.logger.info(lead);
-            const result: AmocrmCreateLeadResponse = (await this.amocrm.request.post(amocrmAPI.leads, [lead])).data;
-            this.logger.info(`Результат создание новой сделки по номеру  ${incomingNumber}: ${result._embedded.leads}`);
-            return true;
+            const result = (await this.amocrm.request.post(amocrmAPI.leads, [lead]));
+            if(result.data.status != undefined && [400,401].includes(result.data.status)){
+                this.logger.error(result.data['validation-errors'][0].errors);
+                throw Error(result.data['validation-errors'][0].errors)
+            } else {
+                this.logger.info(console.log(`Результат создание новой сделки по номеру   ${incomingNumber}: `, result.data));
+                let info: AmocrmCreateLeadResponse = result.data
+                return true;
+            }
         }catch(e){
-            this.logger.error(`createContact ${incomingNumber} ${e}`);
+            this.logger.error(e);
             throw e;
         }
     }
 
     private getResponsibleUserId(): responsibleUserId {
         const date = new Date();
-        return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminNotWork : responsibleUserId.AdminCC;
+        return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminCC : responsibleUserId.AdminCC;
     }
+
+    private validationErrors(response: PlainObject): boolean| Error {
+        return (response._total_items === 1)? true : Error();
+     }
+ 
+    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
 
     private async connect() {
         return await this.amocrmConnect.connect();

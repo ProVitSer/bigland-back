@@ -29,7 +29,7 @@ export class AmocrmConnector implements OnApplicationBootstrap{
             await this.log();
             const response = await this.amocrmClient.request(httpMethod.get, amocrmAPI.account);
             if(!response.data.hasOwnProperty('id')){
-                this.logger.error('Init Amocrm error')
+                this.logger.error('Init Amocrm error', response)
                 throw Error;
             };
             this.logger.info('Init Amocrm successfully')
@@ -62,7 +62,7 @@ export class AmocrmConnector implements OnApplicationBootstrap{
             .catch(() => false);
     }
 
-    private async amocrmAuth() : Promise<void>{
+    public async amocrmAuth() : Promise<void>{
         try{
             const authUrl = await this.amocrmClient.connection.getAuthUrl();
             console.log('Вам нужно перейти по ссылке и выдать права на аккаунт, а после перезагрузить приложение', authUrl);
