@@ -66,13 +66,8 @@ export class AmocrmService implements OnApplicationBootstrap {
 
             this.logger.info(callInfo);
             const resultSendCallIfo = (await this.amocrm.request.post(amocrmAPI.call, [callInfo]));
-            if([400,401].includes(resultSendCallIfo.statusCode)){
-                this.logger.error(resultSendCallIfo.data['validation-errors'][0].errors);
-                throw Error(resultSendCallIfo.data['validation-errors'][0].errors)
-            } else {
-                this.logger.info(resultSendCallIfo.data);
-                return this.validationErrors(resultSendCallIfo.data);
-            }
+            this.logger.info(resultSendCallIfo.data);
+            return this.validationErrors(resultSendCallIfo.data);
         } catch(e){
             throw e;
         }
@@ -189,9 +184,16 @@ export class AmocrmService implements OnApplicationBootstrap {
     }
 
     private validationErrors(response: PlainObject): boolean | Error {
-        return (response._total_items === 1)? true : Error();
+        if(response._total_items === 1 && response.errors.length > 0){
+            response.errors.map((error: any) => {
+                this.logger.error(error)
+            })
+            return Error('Ошибка обработки данных по вызову в AMO')
+        } else {
+            return true;
+        }
      }
- 
+
     private async connect() {
         return await this.amocrmConnect.connect();
     }

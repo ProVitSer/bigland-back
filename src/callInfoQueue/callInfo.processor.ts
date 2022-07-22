@@ -41,7 +41,6 @@ import { Cdr } from '@app/database/entities/Cdr';
           const jobProgress =  await this.amocrm.sendCallInfoToCRM(result,resultSearchId[0]?.amocrmId,directionType.outbound);
           (jobProgress instanceof Error)? done(jobProgress) : done();
         }catch(e){
-            this.logger.info('outgoingCallJob')
             this.logger.error(`outgoingCallJob ${e}`);
             return done()
         }
