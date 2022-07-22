@@ -13,7 +13,7 @@ export class UtilsService {
     }
 
     static isGsmChannel(str: string): boolean{
-        const regexp = new RegExp('^PJSIP\/GSM-.*$'); 
+        const regexp = new RegExp('^PJSIP\/Zadarma-.*$'); 
         return regexp.test(str)
     }
 

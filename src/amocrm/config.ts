@@ -17,8 +17,19 @@ export const sipTrunkMap: { [code in operatorCIDNumber]: OriginalCIDNumber } = {
     [operatorCIDNumber.GOROD4]: OriginalCIDNumber.GOROD4,
     [operatorCIDNumber.GOROD5]: OriginalCIDNumber.GOROD5,
     [operatorCIDNumber.GOROD6]: OriginalCIDNumber.GOROD6,
+    [operatorCIDNumber.MANGOOBZVONCC]: OriginalCIDNumber.MANGOOBZVONCC,
+
 };
 
+export const AmocrmNamekMap: { [code in operatorCIDNumber]?: string } = {
+    [operatorCIDNumber.MANGOOBZVONCC]: 'Обзвон роботом',
+    [operatorCIDNumber.MOBILE7]: 'Входящий вызов на номер 8800 MG_CALL',
+}
+
+export const AmocrmStatusIdkMap: { [code in operatorCIDNumber]?: number } = {
+    [operatorCIDNumber.MANGOOBZVONCC]: 49213284,
+    [operatorCIDNumber.MOBILE7]: 43361652,
+}
 
 export const numberDescriptionkMap: { [code in operatorCIDNumber]: string } = {
     [operatorCIDNumber.MOBILE1]: "",
@@ -34,6 +45,8 @@ export const numberDescriptionkMap: { [code in operatorCIDNumber]: string } = {
     [operatorCIDNumber.GOROD4]: "SYN_35 Усадьба в Подмосковье",
     [operatorCIDNumber.GOROD5]: "SYN_39 Усадьба в Подмосковье",
     [operatorCIDNumber.GOROD6]: "SYN_34 Усадьба в Подмосковье",
+    [operatorCIDNumber.MANGOOBZVONCC]: "",
+
 };
 
 export const callStatuskMap: { [code in pbxCallStatus]?: amocrmCallStatus } = {

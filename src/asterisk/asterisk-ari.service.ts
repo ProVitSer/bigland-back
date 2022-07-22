@@ -43,9 +43,8 @@ export class AriService implements OnApplicationBootstrap {
 
     private async checkInAmo(event: AsteriskARIStasisStartEvent): Promise<void>{
         try {
-            const incomingNumber = (event.channel.caller.number.length == 10) ? `+7${event.channel.caller.number}`: event.channel.caller.number;
             const incomingTrunk = event.channel.dialplan.exten as operatorCIDNumber;
-            return await this.amocrm.actionsInAmocrm(incomingNumber, incomingTrunk);
+            return await this.amocrm.actionsInAmocrm(event.channel.caller.number, incomingTrunk);
         }catch(e){
             this.log.info("ARI routingCall", e)
         }
