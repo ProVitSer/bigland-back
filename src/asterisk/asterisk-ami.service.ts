@@ -49,9 +49,10 @@ export class AmiService implements OnApplicationBootstrap {
     private async parseAmiEvent(event: AsteriskHungupEvent): Promise<void>{
         this.log.info(event)
         if(checkCDR && event.calleridnum.toString().length < 4 &&
-        event.uniqueid == event.linkedid &&
-        event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
+            event.uniqueid == event.linkedid &&
+            event.connectedlinenum.toString().length > 4 &&
+            [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause) &&
+            event.connectedlinenum.toString() !== "<unknown>")
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -60,8 +61,8 @@ export class AmiService implements OnApplicationBootstrap {
 
         } 
         else if(checkCDR && event.calleridnum.toString().length < 4 &&
-        event.connectedlinenum.toString().length > 4 &&
-        event.cause == AsteriskCause.NORMAL_CLEARING
+            event.connectedlinenum.toString().length > 4 &&
+            event.cause == AsteriskCause.NORMAL_CLEARING
         ){
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -69,9 +70,10 @@ export class AmiService implements OnApplicationBootstrap {
             await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.linkedid, type: CallType.Incoming});
         }
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
-        event.uniqueid == event.linkedid &&
-        event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
+            event.uniqueid == event.linkedid &&
+            event.connectedlinenum.toString().length > 4 &&
+            [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause) && 
+            event.connectedlinenum.toString() !== "<unknown>")
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -80,9 +82,9 @@ export class AmiService implements OnApplicationBootstrap {
 
         } 
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
-        event.uniqueid == event.linkedid &&
-        event.connectedlinenum.toString().length < 4 &&
-        event.cause == AsteriskCause.NORMAL_CLEARING
+            event.uniqueid == event.linkedid &&
+            event.connectedlinenum.toString().length < 4 &&
+            event.cause == AsteriskCause.NORMAL_CLEARING
         ){
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);

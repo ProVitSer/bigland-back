@@ -26,7 +26,7 @@ export const AmocrmNamekMap: { [code in operatorCIDNumber]?: string } = {
     [operatorCIDNumber.MOBILE7]: 'Входящий вызов на номер 8800 MG_CALL',
 }
 
-export const AmocrmStatusIdkMap: { [code in operatorCIDNumber]?: number } = {
+export const AmocrmStatusIdMap: { [code in operatorCIDNumber]?: number } = {
     [operatorCIDNumber.MANGOOBZVONCC]: 49213284,
     [operatorCIDNumber.MOBILE7]: 43361652,
 }
@@ -53,4 +53,35 @@ export const callStatuskMap: { [code in pbxCallStatus]?: amocrmCallStatus } = {
     [pbxCallStatus.ANSWERED]: amocrmCallStatus.Answer,
     [pbxCallStatus.NOANSWER]: amocrmCallStatus.NoAnswer,
     [pbxCallStatus.BUSY]: amocrmCallStatus.Busy,
+}
+
+export enum ResponsibleUserId {
+    AdminCC = "6019824",
+    AdminNotWork = "3779682"
+}
+
+export enum CreatedById {
+    AdminCC  = 6990255
+}
+
+export enum CustomFieldsValuesId{
+    ContactsPhone = '783578',
+    LeadsLgTel = '1288762',
+    ContactsLgTel = '1288764',
+    Village = '1274981'
+}
+
+export enum CustomFieldsValuesEnumId{
+    Number = '1760384',
+    VillageNumber = '2947510'
+}
+
+export enum ApplicationStage {
+    DozvonCC = 14222500,
+    OstavilZayavku = 14222500
+}
+
+export enum PipelineId {
+    MGSale = 519481,
+    Village = 4589241
 }

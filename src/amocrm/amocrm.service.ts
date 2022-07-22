@@ -3,8 +3,8 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AmocrmConnector } from './amocrm.connect';
 import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
     AmocrmGetContactsResponse, directionType, httpMethod } from './types/interfaces';
-import { AmocrmNamekMap, AmocrmStatusIdkMap, callStatuskMap, numberDescriptionkMap, RecordPathFormat, sipTrunkMap } from './config';
-import { operatorCIDNumber, responsibleUserId } from '../config/config'; 
+import { AmocrmNamekMap, AmocrmStatusIdMap, ApplicationStage, callStatuskMap, CreatedById, CustomFieldsValuesEnumId, CustomFieldsValuesId, numberDescriptionkMap, PipelineId, RecordPathFormat, ResponsibleUserId, sipTrunkMap } from './config';
+import { operatorCIDNumber } from '../config/config'; 
 import * as moment from 'moment';
 import { Cdr } from '@app/database/entities/Cdr';
 import { PlainObject } from '@app/mongo/types/interfaces';
@@ -99,18 +99,18 @@ export class AmocrmService implements OnApplicationBootstrap {
             const contact: AmocrmCreateContact = {
                 name: `Новый клиент ${incomingNumber}`,
                     responsible_user_id: Number(responsibleUserId),
-                    created_by: 6990255,
+                    created_by: CreatedById.AdminCC,
                     custom_fields_values: [{
-                        field_id: 783578,
+                        field_id: CustomFieldsValuesId.ContactsPhone,
                         field_name: "Телефон",
                         field_code: "PHONE",
                         values: [{
                             value: incomingNumber,
-                            enum_id: 1760384,
+                            enum_id: CustomFieldsValuesEnumId.Number,
                             enum_code: "MOB"
                         }]
                     }, {
-                        field_id: 1288764,
+                        field_id: CustomFieldsValuesId.ContactsLgTel,
                         field_name: "LG Tel",
                         field_code: null,
                         values: [{
@@ -118,7 +118,7 @@ export class AmocrmService implements OnApplicationBootstrap {
                         }]
                     }]
             };
-
+            this.logger.info(contact);
             const result = (await this.amocrm.request.post(amocrmAPI.contacts, [contact]))
             if(result.data.status != undefined && [400,401].includes(result.data.status)){
                 this.logger.error(result.data['validation-errors'][0].errors);
@@ -139,13 +139,13 @@ export class AmocrmService implements OnApplicationBootstrap {
         try {
             const responsibleUserId = this.getResponsibleUserId();
             const lead: AmocrmCreateLead = {
-                name: (AmocrmNamekMap[incomingTrunk]) ? AmocrmNamekMap[incomingTrunk]: 'MG_CALL' ,//(incomingTrunk === '845467')? 'Входящий вызов на номер 8800 MG_CALL': 'MG_CALL',
+                name: (AmocrmNamekMap[incomingTrunk]) ? AmocrmNamekMap[incomingTrunk]: 'MG_CALL' ,
                 responsible_user_id: Number(responsibleUserId),
-                created_by: 6990255,
-                pipeline_id: (incomingTrunk === '845467')? 4589241 : undefined,
-                status_id: (AmocrmStatusIdkMap[incomingTrunk]) ? AmocrmStatusIdkMap[incomingTrunk]: 14222500,//(incomingTrunk === '845467')? 43361652 : 14222500,
+                created_by: CreatedById.AdminCC,
+                pipeline_id: (incomingTrunk === operatorCIDNumber.MOBILE7)? PipelineId.Village : undefined,
+                status_id: (AmocrmStatusIdMap[incomingTrunk]) ? AmocrmStatusIdMap[incomingTrunk]: ApplicationStage.DozvonCC,
                 custom_fields_values: [{
-                    field_id: 1288762,
+                    field_id: CustomFieldsValuesId.LeadsLgTel,
                     field_name: "LG Tel",
                     values: [{
                         value: (sipTrunkMap[incomingTrunk]) ? sipTrunkMap[incomingTrunk] : incomingTrunk
@@ -159,11 +159,11 @@ export class AmocrmService implements OnApplicationBootstrap {
 
             if (numberDescriptionkMap[incomingTrunk]) {
                 lead.custom_fields_values.push({
-                    field_id: 1274981,
+                    field_id: CustomFieldsValuesId.Village,
                     field_name: "Поселок",
                     values: [{
                         value: (numberDescriptionkMap[incomingTrunk]) ? numberDescriptionkMap[incomingTrunk] : ""  ,
-                        enum: 2947510
+                        enum: CustomFieldsValuesEnumId.VillageNumber,
                     }]
                 })
             };
@@ -183,17 +183,15 @@ export class AmocrmService implements OnApplicationBootstrap {
         }
     }
 
-    private getResponsibleUserId(): responsibleUserId {
+    private getResponsibleUserId(): ResponsibleUserId {
         const date = new Date();
-        return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminCC : responsibleUserId.AdminCC;
+        return (date.getHours() >= 19 && date.getHours() <= 22) ? ResponsibleUserId.AdminCC : ResponsibleUserId.AdminCC;
     }
 
-    private validationErrors(response: PlainObject): boolean| Error {
+    private validationErrors(response: PlainObject): boolean | Error {
         return (response._total_items === 1)? true : Error();
      }
  
-    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
-
     private async connect() {
         return await this.amocrmConnect.connect();
     }

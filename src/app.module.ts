@@ -6,7 +6,6 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './logger/logger.module';
 import { AsteriskModule } from './asterisk/asterisk.module';
 import configuration from './config/config.provider';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from './database/database.module';
 import { UtilsModule } from './utils/utils.module';
 import { AxiosModule } from './axios/axios.module';
