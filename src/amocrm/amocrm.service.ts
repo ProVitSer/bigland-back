@@ -98,7 +98,7 @@ export class AmocrmService implements OnApplicationBootstrap {
             const responsibleUserId = this.getResponsibleUserId();
             const contact: AmocrmCreateContact = {
                 name: `Новый клиент ${incomingNumber}`,
-                    responsible_user_id: Number(responsibleUserId),
+                    responsible_user_id: responsibleUserId,
                     created_by: CreatedById.AdminCC,
                     custom_fields_values: [{
                         field_id: CustomFieldsValuesId.ContactsPhone,
@@ -140,7 +140,7 @@ export class AmocrmService implements OnApplicationBootstrap {
             const responsibleUserId = this.getResponsibleUserId();
             const lead: AmocrmCreateLead = {
                 name: (AmocrmNamekMap[incomingTrunk]) ? AmocrmNamekMap[incomingTrunk]: 'MG_CALL' ,
-                responsible_user_id: Number(responsibleUserId),
+                responsible_user_id: responsibleUserId,
                 created_by: CreatedById.AdminCC,
                 pipeline_id: (incomingTrunk === operatorCIDNumber.MOBILE7)? PipelineId.Village : undefined,
                 status_id: (AmocrmStatusIdMap[incomingTrunk]) ? AmocrmStatusIdMap[incomingTrunk]: ApplicationStage.DozvonCC,

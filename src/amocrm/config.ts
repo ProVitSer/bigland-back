@@ -56,8 +56,8 @@ export const callStatuskMap: { [code in pbxCallStatus]?: amocrmCallStatus } = {
 }
 
 export enum ResponsibleUserId {
-    AdminCC = "6019824",
-    AdminNotWork = "3779682"
+    AdminCC = 6019824,
+    AdminNotWork = 3779682
 }
 
 export enum CreatedById {
@@ -65,15 +65,15 @@ export enum CreatedById {
 }
 
 export enum CustomFieldsValuesId{
-    ContactsPhone = '783578',
-    LeadsLgTel = '1288762',
-    ContactsLgTel = '1288764',
-    Village = '1274981'
+    ContactsPhone = 783578,
+    LeadsLgTel = 1288762,
+    ContactsLgTel = 1288764,
+    Village = 1274981
 }
 
 export enum CustomFieldsValuesEnumId{
-    Number = '1760384',
-    VillageNumber = '2947510'
+    Number = 1760384,
+    VillageNumber = 2947510
 }
 
 export enum ApplicationStage {
