@@ -26,13 +26,18 @@ export class SyncLDSScheduleService implements OnApplicationBootstrap {
     async updateLdsUserStatus() {
         try{
             const result = await this.axios.getLSDUserStatus();
-            await this.mongo.mongoRequest({criteria: {},entity: CollectionType.ldsUserStatus,requestType: DbRequestType.deleteMany});
+            this.logger.info(result)
+            const r = await this.mongo.mongoRequest({criteria: {},entity: CollectionType.ldsUserStatus,requestType: DbRequestType.deleteMany});
+            this.logger.info(r)
+
             await Promise.all(result.items.map(async (item:Item) => {
-                await this.mongo.mongoRequest({
+                const a = await this.mongo.mongoRequest({
                     criteria: {},
                     entity: CollectionType.ldsUserStatus,
                     requestType: DbRequestType.insertMany,
                     data: item});
+                    this.logger.info(a)
+
             }))
         }catch(e){
             this.logger.error(`updateLDSUserStatus ${e}`)
