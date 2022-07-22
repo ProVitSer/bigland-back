@@ -3,7 +3,7 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AmocrmConnector } from './amocrm.connect';
 import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
     AmocrmGetContactsResponse, directionType, httpMethod } from './types/interfaces';
-import { callStatuskMap, numberDescriptionkMap, RecordPathFormat, sipTrunkMap } from './config';
+import { AmocrmNamekMap, AmocrmStatusIdkMap, callStatuskMap, numberDescriptionkMap, RecordPathFormat, sipTrunkMap } from './config';
 import { operatorCIDNumber, responsibleUserId } from '../config/config'; 
 import * as moment from 'moment';
 import { Cdr } from '@app/database/entities/Cdr';
@@ -31,7 +31,8 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     public async actionsInAmocrm(incomingNumber: string , incomingTrunk: operatorCIDNumber): Promise<void>{
         try {
-            const resultSearchContact = await this.searchContact(incomingNumber);
+            const searchNumber = (incomingNumber.length == 10) ? incomingNumber : incomingNumber.substr(incomingNumber.length - 10);
+            const resultSearchContact = await this.searchContact(searchNumber);
             if (resultSearchContact == false) {
                 const idCreateContact = await this.createContact(incomingNumber, incomingTrunk);
                 await this.createLeads(incomingNumber, incomingTrunk, idCreateContact);
@@ -138,11 +139,11 @@ export class AmocrmService implements OnApplicationBootstrap {
         try {
             const responsibleUserId = this.getResponsibleUserId();
             const lead: AmocrmCreateLead = {
-                name: (incomingTrunk === '845467')? 'Входящий вызов на номер 8800 MG_CALL': 'MG_CALL',
+                name: (AmocrmNamekMap[incomingTrunk]) ? AmocrmNamekMap[incomingTrunk]: 'MG_CALL' ,//(incomingTrunk === '845467')? 'Входящий вызов на номер 8800 MG_CALL': 'MG_CALL',
                 responsible_user_id: Number(responsibleUserId),
                 created_by: 6990255,
                 pipeline_id: (incomingTrunk === '845467')? 4589241 : undefined,
-                status_id: (incomingTrunk === '845467')? 43361652 : 14222500,
+                status_id: (AmocrmStatusIdkMap[incomingTrunk]) ? AmocrmStatusIdkMap[incomingTrunk]: 14222500,//(incomingTrunk === '845467')? 43361652 : 14222500,
                 custom_fields_values: [{
                     field_id: 1288762,
                     field_name: "LG Tel",
