@@ -3,7 +3,7 @@ import { writeFile, readFile, access } from 'fs/promises'
 import { constants } from 'fs';
 import * as path from 'path';
 import { ConfigService, ConfigModule } from '@nestjs/config';
-import { LoggerService } from '@app/logger/logger.service';
+import { LogService } from '@app/logger/logger.service';
 import { amocrmAPI, AmocrmTokenResponse, httpMethod } from './types/interfaces';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class AmocrmConnector implements OnApplicationBootstrap{
     constructor(
         @Inject('Amocrm') private readonly amocrm: any,
         private readonly configService: ConfigService,
-        private readonly logger: LoggerService
+        private readonly logger: LogService
 
     ) {
     }

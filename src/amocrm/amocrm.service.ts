@@ -1,4 +1,4 @@
-import { LoggerService } from '@app/logger/logger.service';
+import { LogService } from '@app/logger/logger.service';
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AmocrmConnector } from './amocrm.connect';
 import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
@@ -18,7 +18,7 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     constructor(
         private readonly amocrmConnect: AmocrmConnector,
-        private readonly logger: LoggerService,
+        private readonly logger: LogService,
         private readonly configService: ConfigService,
 
     ) {

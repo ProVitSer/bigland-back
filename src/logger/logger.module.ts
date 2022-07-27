@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LoggerService } from './logger.service';
+import {  CustomLoggerService, LogService } from './logger.service';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import * as Transport from 'winston-transport';
@@ -15,21 +15,23 @@ import { TGModule } from '@app/telegram/telegram.module';
         WinstonModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => {
+                const levels = ['info']
                 const transports: Transport[] = [];
-                transports.push(
-                    new winston.transports.DailyRotateFile({
-                        dirname: `${configService.get('log.path')}`,
-                        level: 'info',
-                        filename: `%DATE%.log`,
-                        datePattern: `${configService.get('log.formatDate')}`,
-                        handleExceptions: true,
-                        json: true,
-                        zippedArchive: true,
-                        maxSize: `${configService.get('log.maxSize')}`,
-                        maxFiles: `${configService.get('log.maxFiles')}`
-                    }),
-                );
-
+                levels.map((level: string) => {
+                    transports.push(
+                        new winston.transports.DailyRotateFile({
+                            dirname: `${configService.get('log.path')}/%DATE%`,
+                            level: level,
+                            filename: `${level}.log`,
+                            datePattern: `${configService.get('log.formatDate')}`,
+                            handleExceptions: true,
+                            json: true,
+                            zippedArchive: true,
+                            maxSize: `${configService.get('log.maxSize')}`,
+                            maxFiles: `${configService.get('log.maxFiles')}`
+                        })
+                    )
+                });
                 return {
                     format: combine(timestamp(), splat(), printf(({ level, message, timestamp }) => {
                         return `[${level}] - ${timestamp} ${JSON.stringify(message)}`;
@@ -40,7 +42,7 @@ import { TGModule } from '@app/telegram/telegram.module';
             inject: [ConfigService],
         }),
     ],
-    providers: [LoggerService],
-    exports: [LoggerService],
+    providers: [LogService, CustomLoggerService],
+    exports: [LogService, CustomLoggerService],
 })
 export class LoggerModule { }

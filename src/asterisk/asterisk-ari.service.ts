@@ -1,6 +1,6 @@
 
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { LoggerService } from '../logger/logger.service';
+import { LogService } from '../logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as Ari from 'ari-client';
 import * as moment from 'moment';
@@ -19,7 +19,7 @@ export class AriService implements OnApplicationBootstrap {
     constructor(
         @Inject('ARI') private readonly ari: Client, 
         private readonly configService: ConfigService,
-        private readonly log: LoggerService,
+        private readonly log: LogService,
         private readonly amocrm: AmocrmService
     ) {
     }

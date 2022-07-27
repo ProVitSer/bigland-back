@@ -1,7 +1,7 @@
 import { AmiService } from '@app/asterisk/asterisk-ami.service';
 import { AxiosService } from '@app/axios/axios.service';
 import { DatabaseService } from '@app/database/database.service';
-import { LoggerService } from '@app/logger/logger.service';
+import { LogService } from '@app/logger/logger.service';
 import { OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, 
   SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
@@ -11,7 +11,7 @@ import { Server, WebSocket } from 'ws';
 export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect  {
 
   constructor(
-    private readonly log: LoggerService,
+    private readonly log: LogService,
     private readonly ami: AmiService,
     private readonly mongo: DatabaseService,
     private readonly  axios: AxiosService

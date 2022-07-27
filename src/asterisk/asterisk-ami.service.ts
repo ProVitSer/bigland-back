@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { LoggerService } from '../logger/logger.service';
+import { LogService } from '../logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -23,7 +23,7 @@ export class AmiService implements OnApplicationBootstrap {
     constructor(
         @Inject('AMI') private readonly ami: any,
         private readonly configService: ConfigService,
-        private readonly log: LoggerService,
+        private readonly log: LogService,
         private callQueue: CallInfoService
         
     ) {

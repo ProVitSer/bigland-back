@@ -10,7 +10,7 @@ import {
   } from '@nestjs/bull';
 import { Job } from 'bull';
 import Bull from 'bull';
-import { LoggerService } from "../logger/logger.service";
+import { LogService } from "../logger/logger.service";
 import { MongoService } from '@app/mongo/mongo.service';
 import { CollectionType, DbRequestType } from '@app/mongo/types/types';
 import { UtilsService } from '@app/utils/utils.service';
@@ -23,7 +23,7 @@ import { Cdr } from '@app/database/entities/Cdr';
   export class CallInfoProcessor {
 
     constructor(
-        private readonly logger: LoggerService,
+        private readonly logger: LogService,
         private mysql: DatabaseService,
         private mongo: MongoService,
         private utils: UtilsService,

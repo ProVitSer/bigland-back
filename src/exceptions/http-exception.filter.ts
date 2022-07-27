@@ -1,4 +1,4 @@
-import { LoggerService } from '@app/logger/logger.service';
+import { CustomLoggerService, LogService } from '@app/logger/logger.service';
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Injectable, UnauthorizedException, NotFoundException, HttpStatus } from '@nestjs/common';
 import { Console } from 'console';
 import { Request, Response } from 'express';
@@ -9,7 +9,7 @@ import { IHttpResponse } from './types/interfaces';
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
     constructor(
-        private readonly log: LoggerService,
+        private readonly log: LogService,
         ) {
       }
 

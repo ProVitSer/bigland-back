@@ -1,5 +1,5 @@
 import { Injectable, } from '@nestjs/common';
-import { LoggerService } from "../logger/logger.service";
+import { LogService } from "../logger/logger.service";
 import Bull, { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { AsteriskHungupEvent, CallType } from '@app/asterisk/types/interfaces';
@@ -7,7 +7,7 @@ import { PlainObject } from '@app/asterisk/asterisk-ari.service';
 
 @Injectable()
 export class CallInfoService {
-    private readonly log: LoggerService;
+    private readonly log: LogService;
 
     constructor(@InjectQueue('callInfo') private callQueue: Queue) { }
 
