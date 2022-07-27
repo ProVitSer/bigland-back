@@ -4,7 +4,7 @@ import { AmocrmConnector } from './amocrm.connect';
 import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
     AmocrmGetContactsResponse, directionType, httpMethod } from './types/interfaces';
 import { AmocrmNamekMap, AmocrmStatusIdkMap, callStatuskMap, numberDescriptionkMap, RecordPathFormat, sipTrunkMap } from './config';
-import { operatorCIDNumber, responsibleUserId } from '../config/config'; 
+import { operatorCIDNumber, ResponsibleUserId } from '../config/config'; 
 import * as moment from 'moment';
 import { Cdr } from '@app/database/entities/Cdr';
 import { PlainObject } from '@app/mongo/types/interfaces';
@@ -183,9 +183,9 @@ export class AmocrmService implements OnApplicationBootstrap {
         }
     }
 
-    private getResponsibleUserId(): responsibleUserId {
+    private getResponsibleUserId(): ResponsibleUserId {
         const date = new Date();
-        return (date.getHours() >= 19 && date.getHours() <= 22) ? responsibleUserId.AdminCC : responsibleUserId.AdminCC;
+        return (date.getHours() >= 19 && date.getHours() <= 22) ? ResponsibleUserId.AdminCC : ResponsibleUserId.AdminCC;
     }
 
     private validationErrors(response: PlainObject): boolean| Error {
