@@ -2,13 +2,12 @@
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { LogService } from '../logger/logger.service';
 import { ConfigService } from '@nestjs/config';
-import * as Ari from 'ari-client';
+import Ari, { Channel, Client } from 'ari-client';
 import * as moment from 'moment';
 import { AsteriskARIStasisStartEvent } from './types/interfaces';
 import { AmocrmService } from '@app/amocrm/amocrm.service';
 import { operatorCIDNumber } from '@app/config/config';
-import { Client } from 'ari-client';
-
+import { ARIOUTBOUNDCALL, ARIOUTBOUNDCALLOPERATOR } from './config'
 export interface PlainObject { [key: string]: any }
 
 @Injectable()
@@ -63,6 +62,25 @@ export class AriService implements OnApplicationBootstrap {
             this.log.info("ARI continueDialplan error", e)
         }
 
+    }
+
+    public async ariOutboundCall(number: string): Promise<void>{
+        try {
+            const endpoint = `PJSIP/${number}@${ARIOUTBOUNDCALLOPERATOR}`;
+            return await this.call(endpoint)
+        } catch(e){
+            throw e;
+        }
+        
+    }
+
+    private async call(endpoint: string): Promise<void>{
+        const outChannel: Channel = await this.client.ariClient.Channel();
+        await outChannel.originate({
+            endpoint,
+            ...ARIOUTBOUNDCALL
+        })
+        return;
     }
 
 

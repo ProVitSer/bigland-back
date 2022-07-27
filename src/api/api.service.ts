@@ -1,4 +1,5 @@
 import { AmiService } from '@app/asterisk/asterisk-ami.service';
+import { AriService } from '@app/asterisk/asterisk-ari.service';
 import { AuthService } from '@app/auth/auth.service';
 import { GsmGatewayService, sendSMSInfo } from '@app/gsm-gateway/gsm-gateway.service';
 import { LogService } from '@app/logger/logger.service';
@@ -6,12 +7,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AmocrmDto } from './dto/amocrm.dto';
 import { DNDDto } from './dto/dnd.dto';
-import { IDnd, ISmsData } from './types/interfaces';
+import { IDnd, ISmsData, MonitoringCall, MonitoringCallResult } from './types/interfaces';
 
 @Injectable()
 export class ApiService {
     constructor(
         private readonly ami: AmiService,
+        private readonly ari: AriService,
         private readonly log: LogService,
         private readonly gms: GsmGatewayService,
     ){}
@@ -62,5 +64,22 @@ export class ApiService {
       }catch(e){
         throw e;
       }
+    }
+
+    public async sendMonitoringCall(data: MonitoringCall): Promise<MonitoringCallResult[]>{
+      try {
+        const result: MonitoringCallResult[] = []
+        await Promise.all( data.numbers.map(async (number: string) => {
+          const callResult = await this.ari.ariOutboundCall(number);
+          result.push({
+            number,
+            isCallSuccessful: true
+          })
+        }))
+        return result; 
+      }catch(e){
+        throw e;
+      }
+
     }
 }
