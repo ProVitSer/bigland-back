@@ -8,6 +8,7 @@ import { ApiService } from './api.service';
 import { AmocrmDto } from './dto/amocrm.dto';
 import { DNDDto } from './dto/dnd.dto';
 import { SMSDto } from './dto/sms.dto';
+import { MonitoringCallDTO } from './dto/monitoringCall.dto';
 
 @Controller()
 export class ApiController {
@@ -21,7 +22,7 @@ export class ApiController {
     @UseGuards(JwtAuthGuard)
     @UseFilters(HttpExceptionFilter)
     @Post('dnd')
-    async getHello(@Req() req: Request, @Body() body: DNDDto, @Res() res: Response) {
+    async setDnd(@Req() req: Request, @Body() body: DNDDto, @Res() res: Response) {
       try {
         const resultSet = await this.apiService.setDndStatus(body);        
         return res.status(HttpStatus.OK).json({
@@ -49,6 +50,29 @@ export class ApiController {
         return res.status(HttpStatus.OK).json({
           status: HttpStatus.OK,
           message: resultSend,
+          timestamp: new Date().toISOString(),
+          createdBy: 'VoIPAPI',
+        })
+      } catch(e){
+        return res.status(HttpStatus.FORBIDDEN).json({
+          status: HttpStatus.FORBIDDEN,
+          message: e,
+          timestamp: new Date().toISOString(),
+          createdBy: 'VoIPAPI',
+        })
+      }
+    }
+    
+
+    @UseGuards(JwtAuthGuard)
+    @UseFilters(HttpExceptionFilter)
+    @Post('monitoringCall')
+    async monitoringCall(@Req() req: Request, @Body() body: MonitoringCallDTO, @Res() res: Response) {
+      try {
+        const callResult = await this.apiService.sendMonitoringCall(body);        
+        return res.status(HttpStatus.OK).json({
+          status: HttpStatus.OK,
+          result: callResult,
           timestamp: new Date().toISOString(),
           createdBy: 'VoIPAPI',
         })
