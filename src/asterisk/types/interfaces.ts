@@ -147,7 +147,9 @@ export interface DNDStatus {
 
 export enum AsteriskEvent {
     Hangup = "Hangup",
-    ExtensionStatus = "ExtensionStatus"
+    ExtensionStatus = "ExtensionStatus",
+    BlindTransfer = "BlindTransfer",
+    DialBegin = "DialBegin"
 }
 
 export enum StatustextExtensionStatus {
@@ -165,7 +167,15 @@ export enum StatusExtensionStatus {
 export enum AsteriskChannelStateDesc {
     Up = "Up",
     Down = "Down",
-    Busy = "Busy"
+    Busy = "Busy",
+    Rsrvd = "Rsrvd",
+    OffHook = "OffHook",
+    Dialing = "Dialing",
+    Ring = "Ring",
+    Ringing = "Ringing",
+    Unknown = "Unknown",
+    PreRing = "Pre-ring",
+    DialingOffhook = "Dialing Offhook",
 }
 
 export enum statusHint {
@@ -245,3 +255,99 @@ export const hintStatusMap: { [code in apiStatusDND]: statusHint } = {
     [apiStatusDND.on]: statusHint.on,
     [apiStatusDND.off]: statusHint.off,
 };
+
+
+export interface AsteriskDialBeginEvent  {
+    lines: [string],
+    EOL: string;
+    variables: string;
+    privilege?: string,
+    event: AsteriskEvent;
+    channel: string;
+    channelstate: string;
+    channelstatedesc: AsteriskChannelStateDesc;
+    calleridnum: string;
+    calleridname: string;
+    connectedlinenum: string;
+    connectedlinename: string;
+    language: string;
+    accountcode: string;
+    context: string;
+    exten: string;
+    priority: string;
+    uniqueid: string;
+    linkedid: string;
+    destchannel: string;
+    destchannelstate: string;
+    destchannelstatedesc: AsteriskChannelStateDesc;
+    destcalleridnum: string;
+    destcalleridname: string;
+    destconnectedlinenum: string;
+    destconnectedlinename: string;
+    destlanguage: string;
+    destaccountcode: string;
+    destcontext: string;
+    destexten: string;
+    destpriority: string;
+    destuniqueid: string;
+    destlinkedid: string;
+    dialstring: string;
+}
+
+export interface AsteriskBlindTransferEvent {
+    lines: [string],
+    EOL: string;
+    variables: string;
+    privilege?: string,
+    event: AsteriskEvent;
+    result: string,
+    transfererchannel: string,
+    transfererchannelstate: string,
+    transfererchannelstatedesc: AsteriskChannelStateDesc,
+    transferercalleridnum: string,
+    transferercalleridname: string,
+    transfererconnectedlinenum: string,
+    transfererconnectedlinename: string,
+    transfererlanguage: string,
+    transfereraccountcode: string,
+    transferercontext: string,
+    transfererexten: string,
+    transfererpriority: string,
+    transfereruniqueid: string,
+    transfererlinkedid: string,
+    transfereechannel: string,
+    transfereechannelstate: string,
+    transfereechannelstatedesc: AsteriskChannelStateDesc,
+    transfereecalleridnum: string,
+    transfereecalleridname: string,
+    transfereeconnectedlinenum: string,
+    transfereeconnectedlinename: string,
+    transfereelanguage: string,
+    transfereeaccountcode: string,
+    transfereecontext: string,
+    transfereeexten: string,
+    transfereepriority: string,
+    transfereeuniqueid: string,
+    transfereelinkedid: string,
+    bridgeuniqueid: string,
+    bridgetype: string,
+    bridgetechnology: string,
+    bridgecreator: string,
+    bridgename: string,
+    bridgenumchannels: string,
+    bridgevideosourcemode: Bridgevideosourcemode,
+    isexternal: IsExternal,
+    context: string,
+    extension: string,
+}
+
+
+export enum Bridgevideosourcemode {
+    talker = "talker",
+    single = "single"   
+}
+
+export enum IsExternal {
+    Yes = "Yes",
+    No = "No"   
+}

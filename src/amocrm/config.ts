@@ -1,6 +1,13 @@
 import { operatorCIDNumber, OriginalCIDNumber } from '../config/config';
 import { amocrmCallStatus, pbxCallStatus } from './types/interfaces';
 
+
+export enum AmoCRMAPIV2  {
+    auth = "/private/api/auth.php?type=json",
+    account = "/private/api/v2/account",
+    events = "/api/v2/events/"
+
+}
 export const RecordPathFormat = "YYYY/MM/DD"
 
 export const sipTrunkMap: { [code in operatorCIDNumber]: OriginalCIDNumber } = {
