@@ -1,6 +1,6 @@
 import { AxiosService } from '@app/axios/axios.service';
 import { Item, LdsUserStatusResponse } from '@app/axios/types/interfaces';
-import { LoggerService } from '@app/logger/logger.service';
+import { LogService } from '@app/logger/logger.service';
 import { MongoService } from '@app/mongo/mongo.service';
 import { AmocrmUsers, LdsUsersStatus } from '@app/mongo/schemas';
 import { CollectionType, DbRequestType } from '@app/mongo/types/types';
@@ -14,7 +14,7 @@ export class SyncLDSScheduleService implements OnApplicationBootstrap {
     
     constructor(
         private readonly configService: ConfigService,
-        private readonly logger: LoggerService,
+        private readonly logger: LogService,
         private readonly axios: AxiosService,
         private readonly mongo : MongoService,
         private readonly ws: SocketGateway

@@ -1,5 +1,5 @@
 import { Injectable, } from '@nestjs/common';
-import { LoggerService } from "../logger/logger.service";
+import { LogService } from "../logger/logger.service";
 import Bull, { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { AsteriskHungupEvent, CallType } from '@app/asterisk/types/interfaces';
@@ -7,7 +7,7 @@ import { PlainObject } from '@app/asterisk/asterisk-ari.service';
 
 @Injectable()
 export class CallInfoService {
-    private readonly log: LoggerService;
+    private readonly log: LogService;
 
     constructor(@InjectQueue('callInfo') private callQueue: Queue) { }
 
@@ -22,7 +22,7 @@ export class CallInfoService {
 
     private async addToCallQueue(type: string , event: PlainObject): Promise<Bull.JobId> {
         try{
-            const result =  await this.callQueue.add(type, event, { attempts: 5,removeOnComplete: true, delay: 40000, backoff: 10000 });
+            const result =  await this.callQueue.add(type, event, { attempts: 5, removeOnComplete: true, delay: 40000, backoff: 10000 });
             return result.id
         }catch(e){
             this.log.error(`Проблемы с добавлением события в очередь ${e}`);

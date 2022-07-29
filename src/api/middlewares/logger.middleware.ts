@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Injectable, NestMiddleware, Logger } from "@nestjs/common";
-import { LoggerService } from "@app/logger/logger.service";
+import { CustomLoggerService, LogService } from "@app/logger/logger.service";
 
 
 @Injectable()
@@ -9,7 +9,8 @@ export class LoggerMiddleware implements NestMiddleware {
   private readonly requestStart = Date.now();
 
   constructor(
-    private readonly log: LoggerService
+    private readonly log: LogService,
+    private readonly customLog: CustomLoggerService
   ){}
 
   use(request: Request, response: Response, next: NextFunction): void {
@@ -21,7 +22,7 @@ export class LoggerMiddleware implements NestMiddleware {
         this.getError(error);
     });
     response.on("finish", () => {
-        //this.logMiddleware(request, response, this.requestErrorMessage);
+        this.logMiddleware(request, response, this.requestErrorMessage);
     });
 
     next();
@@ -37,7 +38,7 @@ export class LoggerMiddleware implements NestMiddleware {
     const { rawHeaders, httpVersion, method, socket, url } = request;
     const { remoteAddress, remoteFamily } = socket;  
     const { statusCode, statusMessage } = response;
-    this.log.info(JSON.stringify({
+    this.customLog.amocrm(JSON.stringify({
         timestamp: Date.now(),
         processingTime: Date.now() - this.requestStart,
         body: request.body,

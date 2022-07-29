@@ -1,4 +1,4 @@
-import { LoggerService } from '@app/logger/logger.service';
+import { LogService } from '@app/logger/logger.service';
 import { UtilsService } from '@app/utils/utils.service';
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -45,7 +45,7 @@ export class GsmGatewayService implements OnApplicationBootstrap {
     constructor(
         @Inject('GSM') private readonly gsm: any,
         private readonly configService: ConfigService,
-        private readonly log: LoggerService,
+        private readonly log: LogService,
     ) {
     }
 

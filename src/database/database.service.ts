@@ -1,4 +1,4 @@
-import { LoggerService } from "../logger/logger.service";
+import { LogService } from "../logger/logger.service";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Cdr } from "./entities/Cdr";
@@ -11,7 +11,7 @@ export class DatabaseService {
     constructor(
       @InjectModel(Cdr)
       private getCallInfo: typeof Cdr,
-      private readonly logger : LoggerService, 
+      private readonly logger : LogService, 
     ) {}
 
     public async searchIncomingCallInfoInCdr(uniqueid: string): Promise<Cdr[]> {

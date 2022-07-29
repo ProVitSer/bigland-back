@@ -2,7 +2,7 @@ import { AmiService } from '@app/asterisk/asterisk-ami.service';
 import { AriService } from '@app/asterisk/asterisk-ari.service';
 import { AuthService } from '@app/auth/auth.service';
 import { GsmGatewayService, sendSMSInfo } from '@app/gsm-gateway/gsm-gateway.service';
-import { LoggerService } from '@app/logger/logger.service';
+import { LogService } from '@app/logger/logger.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AmocrmDto } from './dto/amocrm.dto';
@@ -14,7 +14,7 @@ export class ApiService {
     constructor(
         private readonly ami: AmiService,
         private readonly ari: AriService,
-        private readonly log: LoggerService,
+        private readonly log: LogService,
         private readonly gms: GsmGatewayService,
     ){}
 

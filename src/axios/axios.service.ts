@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import axios, { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { LoggerService } from "@app/logger/logger.service";
+import { LogService } from "@app/logger/logger.service";
 import { PlainObject } from "@app/mongo/types/interfaces";
 import { LdsUserStatusResponse } from "./types/interfaces";
 
@@ -10,7 +10,7 @@ export class AxiosService {
     private ldsConf = this.configService.get('lds');
 
     constructor(   
-        private readonly logger: LoggerService,
+        private readonly logger: LogService,
         private httpService: HttpService,
         private readonly configService: ConfigService,
       ) {}

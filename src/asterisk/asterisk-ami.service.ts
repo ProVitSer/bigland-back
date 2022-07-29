@@ -1,15 +1,19 @@
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { LoggerService } from '../logger/logger.service';
+import { LogService } from '../logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AsteriskCause, AsteriskDNDStatusResponse, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, dndStatusMap, EventsStatus, hintStatusMap, statusDND, statusHint } from './types/interfaces';
+import { AsteriskBlindTransferEvent, AsteriskCause, AsteriskDialBeginEvent, AsteriskDNDStatusResponse, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, dndStatusMap, EventsStatus, hintStatusMap, statusDND, statusHint } from './types/interfaces';
 import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
 import * as namiLib from 'nami';
 import * as util from 'util';
 import { DNDDto } from '@app/api/dto/dnd.dto';
 import { IDnd } from '@app/api/types/interfaces';
+import { AmocrmService } from '@app/amocrm/amocrm.service';
+import { DatabaseService } from '@app/database/database.service';
+import { MongoService } from '@app/mongo/mongo.service';
+import { CollectionType, DbRequestType } from '@app/mongo/types/types';
 
 export interface PlainObject { [key: string]: any }
 let checkCDR = true;
@@ -23,8 +27,10 @@ export class AmiService implements OnApplicationBootstrap {
     constructor(
         @Inject('AMI') private readonly ami: any,
         private readonly configService: ConfigService,
-        private readonly log: LoggerService,
-        private callQueue: CallInfoService
+        private readonly log: LogService,
+        private callQueue: CallInfoService,
+        private readonly amocrm: AmocrmService,
+        private mongo: MongoService,
         
     ) {
     }
@@ -39,19 +45,62 @@ export class AmiService implements OnApplicationBootstrap {
             this.client.on('namiLoginIncorrect', () => this.loginIncorrect());
             this.client.on('namiInvalidPeer', () => this.invalidPeer());
             this.client.on('namiEventHangup', (event: AsteriskHungupEvent) => this.parseAmiEvent(event));
-            //this.client.on('namiEventExtensionStatus', (event: AsteriskExtensionStatusEvent) => this.changeExtensionStatus(event));
+            this.client.on('namiEventBlindTransfer', (event: AsteriskBlindTransferEvent) => this.blindTransferEvent(event));
+            this.client.on('namiEventDialBegin', (event: AsteriskDialBeginEvent) => this.dialBeginEvent(event));
+
+
         } catch (e) {
             this.log.error(`AMI onApplicationBootstrap ${e}`)
         }
 
     };
 
+    private async blindTransferEvent(event: AsteriskBlindTransferEvent){
+        try {
+            if(!!event.extension && event.extension.toString().length == 3 && event.transfererconnectedlinenum.toString().length >= 10){
+                const params = {
+                    criteria: {
+                      "localExtension": event.extension
+                    },
+                    entity: CollectionType.amocrmUsers,
+                    requestType: DbRequestType.findAll
+                  };
+                const resultSearchId = await this.mongo.mongoRequest(params);
+                return (!!resultSearchId[0]?.amocrmId) ? await this.amocrm.incomingCallEvent( event.transfererconnectedlinenum, String(resultSearchId[0]?.amocrmId )) : '';
+            }
+
+        } catch(e){
+            throw e;
+        }
+        
+    }
+
+    
+    private async dialBeginEvent(event: AsteriskDialBeginEvent){
+        try {
+            if(!!event.destcalleridnum && event.destcalleridnum.toString().length == 3 && event.calleridnum.toString().length >= 10 ){
+                const params = {
+                    criteria: {
+                      "localExtension": event.destcalleridnum
+                    },
+                    entity: CollectionType.amocrmUsers,
+                    requestType: DbRequestType.findAll
+                  };
+                const resultSearchId = await this.mongo.mongoRequest(params);
+                return (!!resultSearchId[0]?.amocrmId) ? await this.amocrm.incomingCallEvent( event.calleridnum, String(resultSearchId[0]?.amocrmId )) : '';
+            }
+        } catch(e){
+            throw e;
+        }
+    }
+
     private async parseAmiEvent(event: AsteriskHungupEvent): Promise<void>{
         this.log.info(event)
         if(checkCDR && event.calleridnum.toString().length < 4 &&
-        event.uniqueid == event.linkedid &&
-        event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
+            event.uniqueid == event.linkedid &&
+            event.connectedlinenum.toString().length > 4 &&
+            [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause) &&
+            event.connectedlinenum.toString() !== "<unknown>")
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -60,8 +109,8 @@ export class AmiService implements OnApplicationBootstrap {
 
         } 
         else if(checkCDR && event.calleridnum.toString().length < 4 &&
-        event.connectedlinenum.toString().length > 4 &&
-        event.cause == AsteriskCause.NORMAL_CLEARING
+            event.connectedlinenum.toString().length > 4 &&
+            event.cause == AsteriskCause.NORMAL_CLEARING
         ){
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -69,9 +118,10 @@ export class AmiService implements OnApplicationBootstrap {
             await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.linkedid, type: CallType.Incoming});
         }
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
-        event.uniqueid == event.linkedid &&
-        event.connectedlinenum.toString().length > 4 &&
-        [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause))
+            event.uniqueid == event.linkedid &&
+            event.connectedlinenum.toString().length > 4 &&
+            [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause) && 
+            event.connectedlinenum.toString() !== "<unknown>")
         {
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);
@@ -80,9 +130,9 @@ export class AmiService implements OnApplicationBootstrap {
 
         } 
         else if(checkCDR && event.calleridnum.toString().length > 4 &&
-        event.uniqueid == event.linkedid &&
-        event.connectedlinenum.toString().length < 4 &&
-        event.cause == AsteriskCause.NORMAL_CLEARING
+            event.uniqueid == event.linkedid &&
+            event.connectedlinenum.toString().length < 4 &&
+            event.cause == AsteriskCause.NORMAL_CLEARING
         ){
             checkCDR = false;
             setTimeout(this.changeValueCDR,1000);

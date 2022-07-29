@@ -1,25 +1,34 @@
-import { LoggerService } from '@app/logger/logger.service';
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { LogService } from '@app/logger/logger.service';
+import { HttpStatus, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AmocrmConnector } from './amocrm.connect';
 import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
     AmocrmGetContactsResponse, directionType, httpMethod } from './types/interfaces';
-import { AmocrmNamekMap, AmocrmStatusIdkMap, callStatuskMap, numberDescriptionkMap, RecordPathFormat, sipTrunkMap } from './config';
-import { operatorCIDNumber, ResponsibleUserId } from '../config/config'; 
+import { AmoCRMAPIV2, AmocrmNamekMap, AmocrmStatusIdMap, ApplicationStage, callStatuskMap, CreatedById, CustomFieldsValuesEnumId, CustomFieldsValuesId, numberDescriptionkMap, PipelineId, RecordPathFormat, ResponsibleUserId, sipTrunkMap } from './config';
+import { operatorCIDNumber } from '../config/config'; 
 import * as moment from 'moment';
 import { Cdr } from '@app/database/entities/Cdr';
 import { PlainObject } from '@app/mongo/types/interfaces';
 import { ConfigService } from '@nestjs/config';
+import axios, { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class AmocrmService implements OnApplicationBootstrap {
 
     public amocrm: any;
-    private readonly recordDomain = this.configService.get('customConf.recordDomain')
+    private readonly recordDomain = this.configService.get('customConf.recordDomain');
+    private readonly amocrmApiV2Domain = this.configService.get('amocrm.apiV2Domain');
+    private authCookies: any
+    private headers = {
+        'User-Agent': 'ProVitSer/0.0.1',
+        'Content-Type': 'application/json-rpc; charset=utf-8',
+
+    };
 
     constructor(
         private readonly amocrmConnect: AmocrmConnector,
-        private readonly logger: LoggerService,
+        private readonly logger: LogService,
         private readonly configService: ConfigService,
+        private httpService: HttpService,
 
     ) {
     }
@@ -66,13 +75,8 @@ export class AmocrmService implements OnApplicationBootstrap {
 
             this.logger.info(callInfo);
             const resultSendCallIfo = (await this.amocrm.request.post(amocrmAPI.call, [callInfo]));
-            if([400,401].includes(resultSendCallIfo.statusCode)){
-                this.logger.error(resultSendCallIfo.data['validation-errors'][0].errors);
-                throw Error(resultSendCallIfo.data['validation-errors'][0].errors)
-            } else {
-                this.logger.info(resultSendCallIfo.data);
-                return this.validationErrors(resultSendCallIfo.data);
-            }
+            this.logger.info(resultSendCallIfo.data);
+            return this.validationErrors(resultSendCallIfo.data);
         } catch(e){
             throw e;
         }
@@ -98,19 +102,19 @@ export class AmocrmService implements OnApplicationBootstrap {
             const responsibleUserId = this.getResponsibleUserId();
             const contact: AmocrmCreateContact = {
                 name: `Новый клиент ${incomingNumber}`,
-                    responsible_user_id: Number(responsibleUserId),
-                    created_by: 6990255,
+                    responsible_user_id: responsibleUserId,
+                    created_by: CreatedById.AdminCC,
                     custom_fields_values: [{
-                        field_id: 783578,
+                        field_id: CustomFieldsValuesId.ContactsPhone,
                         field_name: "Телефон",
                         field_code: "PHONE",
                         values: [{
                             value: incomingNumber,
-                            enum_id: 1760384,
+                            enum_id: CustomFieldsValuesEnumId.Number,
                             enum_code: "MOB"
                         }]
                     }, {
-                        field_id: 1288764,
+                        field_id: CustomFieldsValuesId.ContactsLgTel,
                         field_name: "LG Tel",
                         field_code: null,
                         values: [{
@@ -118,7 +122,7 @@ export class AmocrmService implements OnApplicationBootstrap {
                         }]
                     }]
             };
-
+            this.logger.info(contact);
             const result = (await this.amocrm.request.post(amocrmAPI.contacts, [contact]))
             if(result.data.status != undefined && [400,401].includes(result.data.status)){
                 this.logger.error(result.data['validation-errors'][0].errors);
@@ -139,13 +143,13 @@ export class AmocrmService implements OnApplicationBootstrap {
         try {
             const responsibleUserId = this.getResponsibleUserId();
             const lead: AmocrmCreateLead = {
-                name: (AmocrmNamekMap[incomingTrunk]) ? AmocrmNamekMap[incomingTrunk]: 'MG_CALL' ,//(incomingTrunk === '845467')? 'Входящий вызов на номер 8800 MG_CALL': 'MG_CALL',
-                responsible_user_id: Number(responsibleUserId),
-                created_by: 6990255,
-                pipeline_id: (incomingTrunk === '845467')? 4589241 : undefined,
-                status_id: (AmocrmStatusIdkMap[incomingTrunk]) ? AmocrmStatusIdkMap[incomingTrunk]: 14222500,//(incomingTrunk === '845467')? 43361652 : 14222500,
+                name: (AmocrmNamekMap[incomingTrunk]) ? AmocrmNamekMap[incomingTrunk]: 'MG_CALL' ,
+                responsible_user_id: responsibleUserId,
+                created_by: CreatedById.AdminCC,
+                pipeline_id: (incomingTrunk === operatorCIDNumber.MOBILE7)? PipelineId.Village : undefined,
+                status_id: (AmocrmStatusIdMap[incomingTrunk]) ? AmocrmStatusIdMap[incomingTrunk]: ApplicationStage.DozvonCC,
                 custom_fields_values: [{
-                    field_id: 1288762,
+                    field_id: CustomFieldsValuesId.LeadsLgTel,
                     field_name: "LG Tel",
                     values: [{
                         value: (sipTrunkMap[incomingTrunk]) ? sipTrunkMap[incomingTrunk] : incomingTrunk
@@ -159,11 +163,11 @@ export class AmocrmService implements OnApplicationBootstrap {
 
             if (numberDescriptionkMap[incomingTrunk]) {
                 lead.custom_fields_values.push({
-                    field_id: 1274981,
+                    field_id: CustomFieldsValuesId.Village,
                     field_name: "Поселок",
                     values: [{
                         value: (numberDescriptionkMap[incomingTrunk]) ? numberDescriptionkMap[incomingTrunk] : ""  ,
-                        enum: 2947510
+                        enum: CustomFieldsValuesEnumId.VillageNumber,
                     }]
                 })
             };
@@ -183,16 +187,86 @@ export class AmocrmService implements OnApplicationBootstrap {
         }
     }
 
+    public async incomingCallEvent(incomingNumber: string, eventResponsibleUserId: string): Promise<boolean> {
+        try {   
+            await this.auth();
+            const body = JSON.stringify({
+                add: [{
+                      type: "phone_call",
+                      phone_number: incomingNumber,
+                      users: [ eventResponsibleUserId ]
+                }]
+             });
+            this.logger.info(body)
+            this.headers['Cookie'] = this.authCookies;
+
+            const result = await this.httpService.post(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.events}`, body, { headers: this.headers } ).toPromise();
+            return !!result.data;
+        }catch(e){
+            this.logger.error(e);
+            throw e;
+        }
+    }
+
+    private async auth(){
+        try{
+            const isAuth = await this.checkAuth();
+            if(isAuth){
+                return;
+            }else{
+                return await this.authAmocrm()
+            }
+        }catch(e){
+            this.logger.error(e);
+            throw e;
+        }
+    }
+
+    private async checkAuth(): Promise<boolean>{
+        try {
+            const result = await this.httpService.get(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.account}`).toPromise();
+            return !!result.data.name;
+        }catch(e){
+            this.logger.error(e);
+            throw e
+        }
+    }
+
+    private async authAmocrm(): Promise<void>{
+        try {
+            const body = {
+                "USER_LOGIN": "vprokin@bigland.ru",
+                "USER_HASH":"c1d54cc26538716e79df15efdeb587c86914fb21"
+             }
+            const result = await this.httpService.post(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.auth}`, body).toPromise();
+            if(!!result.status && !!result.headers['set-cookie'] && result.status == HttpStatus.OK){
+                this.authCookies =  result.headers['set-cookie'];
+            } else {
+                throw new Error(String(result))
+            }
+            return;
+        } catch(e){
+            this.logger.error(e);
+            throw e;
+        }
+    }
+
+
     private getResponsibleUserId(): ResponsibleUserId {
         const date = new Date();
         return (date.getHours() >= 19 && date.getHours() <= 22) ? ResponsibleUserId.AdminCC : ResponsibleUserId.AdminCC;
     }
 
-    private validationErrors(response: PlainObject): boolean| Error {
-        return (response._total_items === 1)? true : Error();
+    private validationErrors(response: PlainObject): boolean | Error {
+        if(response._total_items === 1 && response.errors.length > 0){
+            response.errors.map((error: any) => {
+                this.logger.error(error)
+            })
+            return Error('Ошибка обработки данных по вызову в AMO')
+        } else {
+            return true;
+        }
      }
- 
-    public async sendIncomingCallEvent(incomingNumber, responsibleUserId) {}
 
     private async connect() {
         return await this.amocrmConnect.connect();
