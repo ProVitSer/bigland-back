@@ -1,25 +1,34 @@
 import { LogService } from '@app/logger/logger.service';
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { HttpStatus, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AmocrmConnector } from './amocrm.connect';
 import { AmocrmAddCallInfo, AmocrmAddCallInfoResponse, amocrmAPI, AmocrmContact, AmocrmCreateContact, AmocrmCreateContactResponse, AmocrmCreateLead, AmocrmCreateLeadResponse, AmocrmGetContactsRequest, 
     AmocrmGetContactsResponse, directionType, httpMethod } from './types/interfaces';
-import { AmocrmNamekMap, AmocrmStatusIdMap, ApplicationStage, callStatuskMap, CreatedById, CustomFieldsValuesEnumId, CustomFieldsValuesId, numberDescriptionkMap, PipelineId, RecordPathFormat, ResponsibleUserId, sipTrunkMap } from './config';
+import { AmoCRMAPIV2, AmocrmNamekMap, AmocrmStatusIdMap, ApplicationStage, callStatuskMap, CreatedById, CustomFieldsValuesEnumId, CustomFieldsValuesId, numberDescriptionkMap, PipelineId, RecordPathFormat, ResponsibleUserId, sipTrunkMap } from './config';
 import { operatorCIDNumber } from '../config/config'; 
 import * as moment from 'moment';
 import { Cdr } from '@app/database/entities/Cdr';
 import { PlainObject } from '@app/mongo/types/interfaces';
 import { ConfigService } from '@nestjs/config';
+import axios, { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class AmocrmService implements OnApplicationBootstrap {
 
     public amocrm: any;
-    private readonly recordDomain = this.configService.get('customConf.recordDomain')
+    private readonly recordDomain = this.configService.get('customConf.recordDomain');
+    private readonly amocrmApiV2Domain = this.configService.get('amocrm.apiV2Domain');
+    private authCookies: any
+    private headers = {
+        'User-Agent': 'ProVitSer/0.0.1',
+        'Content-Type': 'application/json-rpc; charset=utf-8',
+
+    };
 
     constructor(
         private readonly amocrmConnect: AmocrmConnector,
         private readonly logger: LogService,
         private readonly configService: ConfigService,
+        private httpService: HttpService,
 
     ) {
     }
@@ -177,6 +186,71 @@ export class AmocrmService implements OnApplicationBootstrap {
             throw e;
         }
     }
+
+    public async incomingCallEvent(incomingNumber: string, eventResponsibleUserId: string): Promise<boolean> {
+        try {   
+            await this.auth();
+            const body = JSON.stringify({
+                add: [{
+                      type: "phone_call",
+                      phone_number: incomingNumber,
+                      users: [ eventResponsibleUserId ]
+                }]
+             });
+            this.logger.info(body)
+            this.headers['Cookie'] = this.authCookies;
+
+            const result = await this.httpService.post(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.events}`, body, { headers: this.headers } ).toPromise();
+            return !!result.data;
+        }catch(e){
+            this.logger.error(e);
+            throw e;
+        }
+    }
+
+    private async auth(){
+        try{
+            const isAuth = await this.checkAuth();
+            if(isAuth){
+                return;
+            }else{
+                return await this.authAmocrm()
+            }
+        }catch(e){
+            this.logger.error(e);
+            throw e;
+        }
+    }
+
+    private async checkAuth(): Promise<boolean>{
+        try {
+            const result = await this.httpService.get(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.account}`).toPromise();
+            return !!result.data.name;
+        }catch(e){
+            this.logger.error(e);
+            throw e
+        }
+    }
+
+    private async authAmocrm(): Promise<void>{
+        try {
+            const body = {
+                "USER_LOGIN": "vprokin@bigland.ru",
+                "USER_HASH":"c1d54cc26538716e79df15efdeb587c86914fb21"
+             }
+            const result = await this.httpService.post(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.auth}`, body).toPromise();
+            if(!!result.status && !!result.headers['set-cookie'] && result.status == HttpStatus.OK){
+                this.authCookies =  result.headers['set-cookie'];
+            } else {
+                throw new Error(String(result))
+            }
+            return;
+        } catch(e){
+            this.logger.error(e);
+            throw e;
+        }
+    }
+
 
     private getResponsibleUserId(): ResponsibleUserId {
         const date = new Date();
