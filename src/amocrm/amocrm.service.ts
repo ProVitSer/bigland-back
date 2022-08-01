@@ -16,12 +16,11 @@ export class AmocrmService implements OnApplicationBootstrap {
 
     public amocrm: any;
     private readonly recordDomain = this.configService.get('customConf.recordDomain');
-    private readonly amocrmApiV2Domain = this.configService.get('amocrm.apiV2Domain');
+    private readonly amocrmApiV2Domain = this.configService.get('amocrm.v2.apiV2Domain');
     private authCookies: any
     private headers = {
-        'User-Agent': 'ProVitSer/0.0.1',
-        'Content-Type': 'application/json-rpc; charset=utf-8',
-
+        'User-Agent': this.configService.get('amocrm.v2.userAgent'),
+        'Content-Type': this.configService.get('amocrm.v2.contentType')
     };
 
     constructor(
@@ -193,7 +192,7 @@ export class AmocrmService implements OnApplicationBootstrap {
             const body = JSON.stringify({
                 add: [{
                       type: "phone_call",
-                      phone_number: incomingNumber,
+                      phone_number: (incomingNumber.length == 10) ? incomingNumber : incomingNumber.substr(incomingNumber.length - 10),
                       users: [ eventResponsibleUserId ]
                 }]
              });
@@ -235,8 +234,8 @@ export class AmocrmService implements OnApplicationBootstrap {
     private async authAmocrm(): Promise<void>{
         try {
             const body = {
-                "USER_LOGIN": "vprokin@bigland.ru",
-                "USER_HASH":"c1d54cc26538716e79df15efdeb587c86914fb21"
+                "USER_LOGIN": this.configService.get('amocrm.v2.login'), 
+                "USER_HASH": this.configService.get('amocrm.v2.hash'), 
              }
             const result = await this.httpService.post(`${this.amocrmApiV2Domain}${AmoCRMAPIV2.auth}`, body).toPromise();
             if(!!result.status && !!result.headers['set-cookie'] && result.status == HttpStatus.OK){
