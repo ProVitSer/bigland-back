@@ -1,22 +1,18 @@
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { LogService } from '../logger/logger.service';
 import { ConfigService } from '@nestjs/config';
-import * as moment from 'moment';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { OnEvent } from '@nestjs/event-emitter';
-import { AsteriskBlindTransferEvent, AsteriskCause, AsteriskDialBeginEvent, AsteriskDNDStatusResponse, AsteriskExtensionStatusEvent, AsteriskHungupEvent, AsteriskStatusResponse, CallType, dndStatusMap, EventsStatus, hintStatusMap, statusDND, statusHint } from './types/interfaces';
-import { CallInfoService } from '@app/callInfoQueue/callInfo.service';
+import { AsteriskAmiEventProviderInterface, AsteriskBlindTransferEvent,  AsteriskDialBeginEvent, AsteriskDNDStatusResponse, AsteriskHungupEvent, AsteriskStatusResponse, AsteriskUnionEvent, dndStatusMap, EventsStatus, hintStatusMap } from './types/interfaces';
 import * as namiLib from 'nami';
-import * as util from 'util';
-import { DNDDto } from '@app/api/dto/dnd.dto';
 import { IDnd } from '@app/api/types/interfaces';
 import { AmocrmService } from '@app/amocrm/amocrm.service';
-import { DatabaseService } from '@app/database/database.service';
 import { MongoService } from '@app/mongo/mongo.service';
 import { CollectionType, DbRequestType } from '@app/mongo/types/types';
+import { HangupEventParser } from './ami/hangup-event-parser';
+import { AsteriskEventType, statusHint } from './types/types';
+import { BlindTransferEventParser } from './ami/blind-transfer-event-parser';
+import { DialBeginEventParser } from './ami/dial-begin-event-parser';
 
 export interface PlainObject { [key: string]: any }
-let checkCDR = true;
 
 
 @Injectable()
@@ -25,14 +21,25 @@ export class AmiService implements OnApplicationBootstrap {
     
 
     constructor(
-        @Inject('AMI') private readonly ami: any,
+        @Inject('AMI') private readonly ami : any,
         private readonly configService: ConfigService,
         private readonly log: LogService,
-        private callQueue: CallInfoService,
-        private readonly amocrm: AmocrmService,
-        private mongo: MongoService,
-        
+        private readonly hangupEvent: HangupEventParser,
+        private readonly blindTransfer: BlindTransferEventParser,
+        private readonly dialBegin: DialBeginEventParser
     ) {
+    }
+
+    get providers(): any {
+        return {
+            [AsteriskEventType.HangupEvent]: this.hangupEvent,
+            [AsteriskEventType.BlindTransferEvent]: this.blindTransfer,
+            [AsteriskEventType.DialBeginEvent]: this.dialBegin,
+        }
+    }
+
+    get amiClient(): any {
+        return this.client;
     }
 
     public async onApplicationBootstrap() {
@@ -44,101 +51,26 @@ export class AmiService implements OnApplicationBootstrap {
             this.client.on('namiConnectionClose', () => this.connectionClose());
             this.client.on('namiLoginIncorrect', () => this.loginIncorrect());
             this.client.on('namiInvalidPeer', () => this.invalidPeer());
-            this.client.on('namiEventHangup', (event: AsteriskHungupEvent) => this.parseAmiEvent(event));
-            this.client.on('namiEventBlindTransfer', (event: AsteriskBlindTransferEvent) => this.blindTransferEvent(event));
-            this.client.on('namiEventDialBegin', (event: AsteriskDialBeginEvent) => this.dialBeginEvent(event));
-
-
+            this.client.on('namiEventHangup', (event: AsteriskHungupEvent) => this.namiEvent(event, AsteriskEventType.HangupEvent));
+            this.client.on('namiEventBlindTransfer', (event: AsteriskBlindTransferEvent) => this.namiEvent(event, AsteriskEventType.BlindTransferEvent));
+            this.client.on('namiEventDialBegin', (event: AsteriskDialBeginEvent) => this.namiEvent(event, AsteriskEventType.DialBeginEvent));
         } catch (e) {
             this.log.error(`AMI onApplicationBootstrap ${e}`)
         }
 
     };
 
-    private async blindTransferEvent(event: AsteriskBlindTransferEvent){
+    private namiEvent(event: AsteriskUnionEvent, eventType: AsteriskEventType){
         try {
-            if(!!event.extension && event.extension.toString().length == 3 && event.transfererconnectedlinenum.toString().length >= 10){
-                const params = {
-                    criteria: {
-                      "localExtension": event.extension
-                    },
-                    entity: CollectionType.amocrmUsers,
-                    requestType: DbRequestType.findAll
-                  };
-                const resultSearchId = await this.mongo.mongoRequest(params);
-                return (!!resultSearchId[0]?.amocrmId) ? await this.amocrm.incomingCallEvent( event.transfererconnectedlinenum, String(resultSearchId[0]?.amocrmId )) : '';
-            }
-
-        } catch(e){
-            throw e;
-        }
-        
-    }
-
-    
-    private async dialBeginEvent(event: AsteriskDialBeginEvent){
-        try {
-            if(!!event.destcalleridnum && event.destcalleridnum.toString().length == 3 && event.calleridnum.toString().length >= 10 ){
-                const params = {
-                    criteria: {
-                      "localExtension": event.destcalleridnum
-                    },
-                    entity: CollectionType.amocrmUsers,
-                    requestType: DbRequestType.findAll
-                  };
-                const resultSearchId = await this.mongo.mongoRequest(params);
-                return (!!resultSearchId[0]?.amocrmId) ? await this.amocrm.incomingCallEvent( event.calleridnum, String(resultSearchId[0]?.amocrmId )) : '';
-            }
-        } catch(e){
-            throw e;
+            const provider = this.getProvider(eventType);
+            return provider.parseEvent(event)
+        }catch(e){
+            this.log.error(e)
         }
     }
 
-    private async parseAmiEvent(event: AsteriskHungupEvent): Promise<void>{
-        this.log.info(event)
-        if(checkCDR && event.calleridnum.toString().length < 4 &&
-            event.uniqueid == event.linkedid &&
-            event.connectedlinenum.toString().length > 4 &&
-            [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause) &&
-            event.connectedlinenum.toString() !== "<unknown>")
-        {
-            checkCDR = false;
-            setTimeout(this.changeValueCDR,1000);
-            this.log.info(`Исходящий ${event.uniqueid}`);
-            await this.callQueue.runCallQueueJob('Outgoing',{ uniqueid: event.uniqueid, type: CallType.Outgoing});
-
-        } 
-        else if(checkCDR && event.calleridnum.toString().length < 4 &&
-            event.connectedlinenum.toString().length > 4 &&
-            event.cause == AsteriskCause.NORMAL_CLEARING
-        ){
-            checkCDR = false;
-            setTimeout(this.changeValueCDR,1000);
-            this.log.info(`Входящий ${event.linkedid}`);
-            await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.linkedid, type: CallType.Incoming});
-        }
-        else if(checkCDR && event.calleridnum.toString().length > 4 &&
-            event.uniqueid == event.linkedid &&
-            event.connectedlinenum.toString().length > 4 &&
-            [AsteriskCause.NORMAL_CLEARING, AsteriskCause.USER_BUSY, AsteriskCause.INTERWORKING].includes(event?.cause) && 
-            event.connectedlinenum.toString() !== "<unknown>")
-        {
-            checkCDR = false;
-            setTimeout(this.changeValueCDR,1000);
-            this.log.info(`Исходящий ${event.uniqueid}`);
-            await this.callQueue.runCallQueueJob('Outgoing',{ uniqueid: event.uniqueid, type: CallType.Outgoing});
-
-        } 
-        else if(checkCDR && event.calleridnum.toString().length > 4 &&
-            event.uniqueid == event.linkedid &&
-            event.connectedlinenum.toString().length < 4 &&
-            event.cause == AsteriskCause.NORMAL_CLEARING
-        ){
-            checkCDR = false;
-            setTimeout(this.changeValueCDR,1000);
-            this.log.info(`Входящий ${event.uniqueid}`);
-            await this.callQueue.runCallQueueJob('Incoming',{ uniqueid: event.uniqueid, type: CallType.Incoming});
-        }
+    private getProvider(eventType: AsteriskEventType): AsteriskAmiEventProviderInterface {
+        return this.providers[eventType];
     }
 
     public async sendAmiCall(localExtension: string, outgoingNumber: string): Promise<void> {
@@ -244,12 +176,6 @@ export class AmiService implements OnApplicationBootstrap {
             resolve();
         });
         
-    }
-
-
-    private changeValueCDR(){
-        checkCDR = true;
-
     }
 
     private connectionClose() {

@@ -1,4 +1,4 @@
-import { apiStatusDND } from '@app/asterisk/types/interfaces';
+import { apiStatusDND } from '@app/asterisk/types/types';
 import { IsEnum, IsNotEmpty, IsArray, ValidateNested } from 'class-validator';
 
 export class DNDDto  {

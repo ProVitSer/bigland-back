@@ -1,5 +1,4 @@
-import { apiStatusDND } from '@app/asterisk/types/interfaces';
-import { IsEnum, IsNotEmpty, IsArray, ValidateNested, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class SMSDto  {
     @IsString()

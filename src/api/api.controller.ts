@@ -101,11 +101,4 @@ export class ApiController {
       return res.status(HttpStatus.SERVICE_UNAVAILABLE).json({});
     }
 
-    // @Get('login')
-    // async getAuth(@Req() req, @Res() res) {
-    //   const token = await this.auth.signToken()
-    //   console.log(token)
-    // }
-
-
 }

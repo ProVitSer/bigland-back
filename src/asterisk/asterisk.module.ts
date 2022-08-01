@@ -3,13 +3,16 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
 import { LoggerModule } from '../logger/logger.module'
 import { AriService } from './asterisk-ari.service'
 import { AmiService } from './asterisk-ami.service';
-import { AmiEventsHandlers } from './asterisk-ami-events-handlers';
 import * as ARI from 'ari-client';
 import * as namiLib from 'nami';
 import { DatabaseModule } from '@app/database/database.module';
 import { CallInfoQueueModule } from '../callInfoQueue/callInfo.module';
 import { AmocrmModule } from '@app/amocrm/amocrm.module';
 import { MongoModule } from '@app/mongo/mongo.module';
+import { HangupEventParser } from './ami/hangup-event-parser';
+import { DialBeginEventParser } from './ami/dial-begin-event-parser';
+import { BlindTransferEventParser } from './ami/blind-transfer-event-parser';
+import { ActionService } from './ami/action-service';
 
 @Module({
     imports: [
@@ -45,11 +48,9 @@ import { MongoModule } from '@app/mongo/mongo.module';
             },
             inject: [ConfigService]
         },
-        AriService,
-        AmiService,
-        AmiEventsHandlers
+        AriService, AmiService, HangupEventParser, DialBeginEventParser, BlindTransferEventParser, ActionService
     ],
-    exports: ['ARI', AriService, 'AMI', AmiService]
+    exports: ['ARI', AriService, 'AMI', AmiService ]
 })
 
 export class AsteriskModule {}

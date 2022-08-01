@@ -1,4 +1,4 @@
-import { apiStatusDND } from "@app/asterisk/types/interfaces";
+import { apiStatusDND } from "@app/asterisk/types/types";
 
 export interface ISmsData {
     number: string;

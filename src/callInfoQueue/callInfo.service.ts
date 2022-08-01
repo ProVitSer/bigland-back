@@ -2,7 +2,6 @@ import { Injectable, } from '@nestjs/common';
 import { LogService } from "../logger/logger.service";
 import Bull, { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
-import { AsteriskHungupEvent, CallType } from '@app/asterisk/types/interfaces';
 import { PlainObject } from '@app/asterisk/asterisk-ari.service';
 
 @Injectable()
