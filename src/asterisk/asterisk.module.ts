@@ -50,7 +50,7 @@ import { ActionService } from './ami/action-service';
         },
         AriService, AmiService, HangupEventParser, DialBeginEventParser, BlindTransferEventParser, ActionService
     ],
-    exports: ['ARI', AriService, 'AMI', AmiService ]
+    exports: ['ARI', AriService, 'AMI', AmiService, HangupEventParser, DialBeginEventParser, BlindTransferEventParser, ActionService ]
 })
 
 export class AsteriskModule {}
