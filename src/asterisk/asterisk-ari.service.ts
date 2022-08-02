@@ -8,11 +8,11 @@ import { AsteriskARIStasisStartEvent } from './types/interfaces';
 import { AmocrmService } from '@app/amocrm/amocrm.service';
 import { operatorCIDNumber } from '@app/config/config';
 import { ARIOUTBOUNDCALL, ARIOUTBOUNDCALLOPERATOR } from './config'
+import { ChannelType } from './types/types';
 export interface PlainObject { [key: string]: any }
 
 @Injectable()
 export class AriService implements OnApplicationBootstrap {
-    private callInfo: PlainObject;
     private client: any;
 
     constructor(
@@ -66,7 +66,7 @@ export class AriService implements OnApplicationBootstrap {
 
     public async ariOutboundCall(number: string): Promise<void>{
         try {
-            const endpoint = `PJSIP/${number}@${ARIOUTBOUNDCALLOPERATOR}`;
+            const endpoint = `${ChannelType.PJSIP}/${number}@${ARIOUTBOUNDCALLOPERATOR}`;
             return await this.call(endpoint)
         } catch(e){
             throw e;

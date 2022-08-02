@@ -1,3 +1,4 @@
+import { ActionService } from '@app/asterisk/ami/action-service';
 import { AmiService } from '@app/asterisk/asterisk-ami.service';
 import { AriService } from '@app/asterisk/asterisk-ari.service';
 import { AuthService } from '@app/auth/auth.service';
@@ -12,7 +13,7 @@ import { IDnd, ISmsData, MonitoringCall, MonitoringCallResult } from './types/in
 @Injectable()
 export class ApiService {
     constructor(
-        private readonly ami: AmiService,
+        private readonly ami: ActionService,
         private readonly ari: AriService,
         private readonly log: LogService,
         private readonly gms: GsmGatewayService,
