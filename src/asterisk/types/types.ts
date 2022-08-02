@@ -114,3 +114,12 @@ export enum apiStatusDND {
     on = 'on',
     off = 'off'
 }
+
+export enum ChannelType {
+    PJSIP = "PJSIP",
+    SIP = "SIP"
+}
+
+export enum DbFamilyType {
+    DND = "DND",
+}
