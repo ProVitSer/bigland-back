@@ -16,7 +16,6 @@ export class ApiController {
         private readonly log: LogService,
         private readonly config: ConfigService,
         private readonly apiService: ApiService,
-        private readonly customLog: CustomLoggerService
     ){}
 
     @UseGuards(JwtAuthGuard)
